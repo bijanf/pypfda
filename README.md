@@ -57,6 +57,43 @@ in an online coupled-climate-model OSSE; Lorenz-96 is the smallest
 chaotic benchmark on which those techniques can be exhibited end-to-end
 without a climate model in the loop.
 
+## Scope — what `pypfda` is and is not
+
+`pypfda` ships the **data-assimilation method**, not a turnkey coupling
+to any specific Earth-system model. In concrete terms:
+
+**What is here, today.** The particle filter itself (SIR), numerically
+stable weight and ESS computation, four resampling schemes, Gaspari–Cohn
+localization, observation-error tempering, a max-weight degeneracy cap,
+and post-resample inflation. Demonstrated end-to-end on Lorenz-63 and
+Lorenz-96.
+
+**What is not here, today, and will not arrive by magic.**
+
+- Integration glue for any specific climate model (CM2Mc-BLING, MITgcm,
+  CESM, ICON, …). Nothing in this repository knows how to write an FV3
+  restart file, launch a SLURM job array, or cycle ensemble state
+  between `INPUT/` and `RESTART/` directories.
+- The HPC orchestration used by the companion paper — that is a
+  separate, cluster-specific driver that calls `pypfda` functions but
+  lives elsewhere.
+- A coral δ¹⁸O proxy forward model, a PAGES 2k loader, or any
+  paleo-specific I/O. These are planned for `pypfda.paleo` but are
+  not yet implemented.
+- The 100-member ensemble output underlying the paper's figures (that
+  sits on the authors' cluster; see [Paper data](#paper-data) below).
+
+**Using `pypfda` with your own model is real engineering work.** You
+are expected to write the driver that runs your forward model, reads
+its state into a NumPy array, calls `pf.assimilate(...)`, writes the
+resampled state back, and handles your own HPC scheduling. For
+Lorenz-style ODEs that driver is a few dozen lines (see
+`examples/`). For a coupled climate model with distributed restart
+files and a queue system, expect weeks of integration effort per
+model. If you are attempting this and want guidance,
+[open an issue](https://github.com/bijanf/pypfda/issues) or email the
+authors — we are happy to help, but there is no plug-and-play path.
+
 ## Highlights
 
 - **Pure Python.** No Fortran, no compilation. Works on Linux, macOS, and
