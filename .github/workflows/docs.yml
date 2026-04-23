@@ -12,8 +12,11 @@ permissions:
   pages: write
   id-token: write
 
+# Build runs per-ref so branches / PRs do not cancel each other's builds.
+# Only the deploy job below touches the shared GitHub Pages environment,
+# and that job is guarded by `if: github.ref == 'refs/heads/main'`.
 concurrency:
-  group: pages
+  group: docs-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

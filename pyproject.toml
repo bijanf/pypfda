@@ -201,5 +201,5 @@ fail_under = 80
 
 # ---------------------------- codespell ---------------------------------
 [tool.codespell]
-skip = "*.pyc,*.lock,docs/_build,build,dist"
+skip = "*.pyc,*.lock,./docs/_build,./docs/_build/*,./build,./dist,./.venv,./.venv/*,./*.egg-info,./*.egg-info/*,./docs/api/_autosummary/*"
 ignore-words-list = "fro,nd,thi"
