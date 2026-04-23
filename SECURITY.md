@@ -12,7 +12,7 @@ are best-effort.
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability in `pypfda`, please report it
-**privately** to bijan.fallah01@gmail.com with the subject
+**privately** to bijan.fallah@gmail.com with the subject
 `[security] pypfda`. Please do **not** open a public GitHub issue for
 security reports.
 

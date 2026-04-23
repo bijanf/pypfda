@@ -10,10 +10,10 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [
-    { name = "Bijan Fallah", email = "bijan.fallah01@gmail.com" },
+    { name = "Bijan Fallah", email = "bijan.fallah@gmail.com" },
 ]
 maintainers = [
-    { name = "Bijan Fallah", email = "bijan.fallah01@gmail.com" },
+    { name = "Bijan Fallah", email = "bijan.fallah@gmail.com" },
 ]
 keywords = [
     "data assimilation",

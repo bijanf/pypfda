@@ -5,7 +5,7 @@ type: software
 authors:
   - given-names: Bijan
     family-names: Fallah
-    email: bijan.fallah01@gmail.com
+    email: bijan.fallah@gmail.com
     affiliation: Potsdam Institute for Climate Impact Research (PIK)
     orcid: "https://orcid.org/0000-0000-0000-0000"
 repository-code: "https://github.com/bijanf/pypfda"
