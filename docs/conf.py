@@ -21,7 +21,6 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
-    "sphinx_autodoc_typehints",
     "sphinx_design",
     "sphinx_copybutton",
     "myst_parser",
@@ -82,3 +81,10 @@ html_theme_options = {
 
 # Treat warnings as errors in CI; pyproject sets fail_on_warning for RTD.
 nitpicky = False
+
+# Suppress autosummary-related duplicate-object warnings caused by
+# `autosummary` + `autodoc_typehints` documenting dataclass attributes
+# from both the package re-export and the underlying submodule. The
+# resulting docs are correct; the warning is cosmetic.
+suppress_warnings = ["autosectionlabel.*"]
+

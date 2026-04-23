@@ -7,6 +7,8 @@ return float arrays of shape ``(n_members,)``.
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from scipy.special import logsumexp
@@ -60,18 +62,14 @@ def gaussian_log_likelihood(
     sigma = np.broadcast_to(np.asarray(obs_err, dtype=float), obs.shape)
 
     if pred.ndim != 2:
-        raise ValueError(
-            f"ensemble_obs must be 2-D (n_members, n_obs); got shape {pred.shape}"
-        )
+        raise ValueError(f"ensemble_obs must be 2-D (n_members, n_obs); got shape {pred.shape}")
     if obs.shape != (pred.shape[1],):
-        raise ValueError(
-            f"observations must have shape ({pred.shape[1]},); got {obs.shape}"
-        )
+        raise ValueError(f"observations must have shape ({pred.shape[1]},); got {obs.shape}")
     if np.any(sigma <= 0):
         raise ValueError("obs_err must be strictly positive")
 
     residuals = (pred - obs) / sigma
-    return -0.5 * np.sum(residuals**2, axis=1)
+    return cast("NDArray[np.floating]", -0.5 * np.sum(residuals**2, axis=1))
 
 
 def normalize_log_weights(log_weights: ArrayLike) -> NDArray[np.floating]:
@@ -96,7 +94,7 @@ def normalize_log_weights(log_weights: ArrayLike) -> NDArray[np.floating]:
         raise ValueError(f"log_weights must be 1-D; got shape {lw.shape}")
     if not np.all(np.isfinite(lw)):
         raise ValueError("log_weights must be finite")
-    return np.exp(lw - logsumexp(lw))
+    return cast("NDArray[np.floating]", np.exp(lw - logsumexp(lw)))
 
 
 def effective_sample_size(weights: ArrayLike) -> float:
@@ -182,13 +180,11 @@ def cap_max_weight(
         raise ValueError(f"log_weights must be 1-D; got shape {lw.shape}")
     n = lw.size
     if not (1.0 / n) < max_weight <= 1.0:
-        raise ValueError(
-            f"max_weight must be in (1/N, 1]; got {max_weight} for N={n}"
-        )
+        raise ValueError(f"max_weight must be in (1/N, 1]; got {max_weight} for N={n}")
 
     w = normalize_log_weights(lw)
     if np.max(w) <= max_weight:
-        return np.log(w)
+        return cast("NDArray[np.floating]", np.log(w))
 
     # Cap the top weight; spread the surplus across the remaining particles
     # in proportion to their current weights.
@@ -205,4 +201,4 @@ def cap_max_weight(
         capped[top] = max_weight
     capped = np.clip(capped, a_min=1e-300, a_max=None)
     capped /= capped.sum()
-    return np.log(capped)
+    return cast("NDArray[np.floating]", np.log(capped))

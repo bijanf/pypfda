@@ -51,7 +51,7 @@ for diagnostics; ignore it if you do not care.
 
 ## Where to next
 
-- The [Lorenz-96 tutorial](tutorials/01_lorenz96.md) shows a full twin
+- The [Lorenz-63 tutorial](tutorials/01_lorenz63.md) shows a full twin
   experiment with skill metrics.
 - The [particle filter theory page](theory/particle_filter.md) walks
   through the SIR derivation and explains the design choices behind the

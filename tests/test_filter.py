@@ -68,9 +68,7 @@ class TestAssimilate:
         _, info = pf.assimilate(ensemble, ensemble_obs, observations, obs_err=0.01)
         assert info.weights.max() <= 0.3 + 1e-9
 
-    def test_returns_dataclass_with_expected_fields(
-        self, rng: np.random.Generator
-    ) -> None:
+    def test_returns_dataclass_with_expected_fields(self, rng: np.random.Generator) -> None:
         ensemble = rng.normal(size=(10, 3))
         ensemble_obs = rng.normal(size=(10, 2))
         observations = rng.normal(size=2)
@@ -124,9 +122,7 @@ class TestEndToEndKalmanComparison:
             ensemble = a * ensemble + rng.normal(0, sigma_proc, n_members)
             ensemble_obs = (h * ensemble).reshape(n_members, 1)
             obs_t = np.array([observations[t]])
-            ensemble, info = pf.assimilate(
-                ensemble, ensemble_obs, obs_t, obs_err=sigma_obs
-            )
+            ensemble, info = pf.assimilate(ensemble, ensemble_obs, obs_t, obs_err=sigma_obs)
             # Posterior mean = weighted average if not resampled, plain mean otherwise.
             mean_t = (
                 float(np.average(ensemble))

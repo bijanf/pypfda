@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Systematic, stratified, residual, and multinomial resampling.
   - Gaspari–Cohn spatial localization (great-circle distance).
   - Property-based tests for weight and resampling invariants.
-  - End-to-end Lorenz-96 twin experiment.
+  - End-to-end Lorenz-63 twin experiment.
   - Sphinx documentation skeleton with Furo theme.
   - Continuous integration on Linux, macOS, and Windows for Python
     3.10–3.12.

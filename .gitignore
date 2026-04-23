@@ -91,3 +91,4 @@ reproduce/figures/
 # Generated artifacts
 .DS_Store
 *.log
+src/pypfda/_version.py

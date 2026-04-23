@@ -82,7 +82,7 @@ for _ in range(50):
 ```
 
 See the [quickstart](https://bijanf.github.io/pypfda/quickstart.html) and
-[Lorenz-96 tutorial](https://bijanf.github.io/pypfda/tutorials/01_lorenz96.html)
+[Lorenz-63 tutorial](https://bijanf.github.io/pypfda/tutorials/01_lorenz63.html)
 for full walk-throughs.
 
 ## Documentation

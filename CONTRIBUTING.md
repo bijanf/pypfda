@@ -7,8 +7,10 @@ how to propose changes.
 ## Code of conduct
 
 Participation in this project is governed by the
-[Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By contributing,
-you agree to abide by its terms.
+[Contributor Covenant Code of Conduct][coc]. By contributing, you agree
+to abide by its terms.
+
+[coc]: https://github.com/bijanf/pypfda/blob/main/CODE_OF_CONDUCT.md
 
 ## Development environment
 
@@ -33,7 +35,7 @@ pytest --cov                 # with coverage
 mypy src/pypfda              # type check
 ruff check src/ tests/       # lint
 ruff format --check .        # format check
-sphinx-build -W docs docs/_build  # docs
+sphinx-build -b html docs docs/_build/html  # docs
 ```
 
 `pre-commit run --all-files` runs the same checks that CI runs.

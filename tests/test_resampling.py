@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from hypothesis import given, settings
-from hypothesis import strategies as st
 
-from pypfda.resampling import multinomial, residual, resample, stratified, systematic
+from pypfda.resampling import multinomial, resample, residual, stratified, systematic
 
 ALL_SCHEMES = ["systematic", "stratified", "residual", "multinomial"]
 
@@ -120,23 +118,24 @@ def test_rejects_unnormalized(scheme: str) -> None:
         resample(np.array([0.5, 0.5, 0.5]), method=scheme)
 
 
-@given(
-    n=st.integers(2, 30),
-    seed=st.integers(0, 2**32 - 1),
-)
-@settings(max_examples=50, deadline=None)
-def test_systematic_lower_variance_than_multinomial(n: int, seed: int) -> None:
-    """Systematic resampling should have variance no greater than multinomial."""
-    rng = np.random.default_rng(seed)
-    weights = rng.dirichlet(np.full(n, 0.5))
-    n_trials = 200
-    sys_counts = np.zeros((n_trials, n))
-    mul_counts = np.zeros((n_trials, n))
-    for t in range(n_trials):
-        sys_counts[t] = np.bincount(systematic(weights, rng), minlength=n)
-        mul_counts[t] = np.bincount(multinomial(weights, rng), minlength=n)
-    var_sys = sys_counts.var(axis=0).sum()
-    var_mul = mul_counts.var(axis=0).sum()
-    # Systematic should have strictly lower aggregate variance with high
-    # probability; allow a tiny slack to absorb stochastic fluctuations.
-    assert var_sys <= var_mul + 1e-6
+def test_systematic_lower_average_variance_than_multinomial() -> None:
+    """Systematic resampling has lower count variance than multinomial *on average*.
+
+    The single-sample variance ordering can be violated by chance for small
+    ``N``, so we average over many random weight vectors and many trials.
+    """
+    rng = np.random.default_rng(0)
+    n = 20
+    n_weight_draws = 30
+    n_trials = 500
+    diffs: list[float] = []
+    for _ in range(n_weight_draws):
+        weights = rng.dirichlet(np.full(n, 0.5))
+        sys_counts = np.zeros((n_trials, n))
+        mul_counts = np.zeros((n_trials, n))
+        for t in range(n_trials):
+            sys_counts[t] = np.bincount(systematic(weights, rng), minlength=n)
+            mul_counts[t] = np.bincount(multinomial(weights, rng), minlength=n)
+        diffs.append(float(sys_counts.var(axis=0).sum() - mul_counts.var(axis=0).sum()))
+    # On average, systematic strictly beats multinomial.
+    assert float(np.mean(diffs)) < 0.0

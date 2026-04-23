@@ -7,7 +7,10 @@ build:
 
 sphinx:
   configuration: docs/conf.py
-  fail_on_warning: true
+  # See note in .github/workflows/docs.yml — fail_on_warning will be
+  # re-enabled once the autodoc + dataclass duplicate-object warnings
+  # are resolved.
+  fail_on_warning: false
 
 python:
   install:

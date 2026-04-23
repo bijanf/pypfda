@@ -22,7 +22,7 @@ theory/particle_filter
 :maxdepth: 1
 :caption: Tutorials
 
-tutorials/01_lorenz96
+tutorials/01_lorenz63
 ```
 
 ```{toctree}
