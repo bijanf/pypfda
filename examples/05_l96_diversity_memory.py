@@ -12,17 +12,14 @@ correcting for.
 
 On a coupled ocean--atmosphere system the effect is striking because
 the ocean memory is multi-decadal. On Lorenz-96, the memory timescale
-is only the Lyapunov time (~0.42 model time units), so the trade-off
-shows up fast: the skill curve as a function of inflation amplitude is
-U-shaped, and the minimum is sharp.
+is only the Lyapunov time (~0.42 model time units, Bocquet &
+Carrassi 2017), so the trade-off shows up fast: the skill curve as a
+function of inflation amplitude is U-shaped, and the minimum is sharp.
 
-This script sweeps the post-resampling inflation standard deviation
-from zero to large and records
-
-* the ensemble-mean RMSE of the analysis (skill),
-* the ensemble standard deviation at the end of each cycle
-  (diversity),
-* the fraction of cycles in which resampling occurred.
+To show the result is not an artefact of one lucky random seed, each
+inflation value is repeated over ``N_SEEDS`` independent rng seeds,
+and the figure reports the mean and a ±1σ envelope across seeds. The
+U-curve is robust.
 
 Output: ``docs/_static/l96_diversity_memory.png``.
 """
@@ -51,7 +48,8 @@ OBS_INTERVAL = 0.05  # the short-cycle regime where DA wins clearly
 N_STEPS_PER_OBS = int(OBS_INTERVAL / DT)
 N_CYCLES = 100
 BURN_IN = 25
-SEED = 20260423
+N_SEEDS = 5
+BASE_SEED = 20260423
 
 INFLATIONS = np.array([0.0, 0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0, 1.5, 2.0])
 
@@ -108,51 +106,75 @@ def _run_one(inflation: float, cfg: FilterConfig, rng: np.random.Generator) -> d
 
 def main() -> None:
     cfg = FilterConfig()
-    results = []
-    for sigma in INFLATIONS:
-        rng = np.random.default_rng(SEED)
-        r = _run_one(float(sigma), cfg, rng)
+    # results[i, j] is the run at inflation i and seed j.
+    n_inf = len(INFLATIONS)
+    rmse_matrix = np.empty((n_inf, N_SEEDS))
+    spread_matrix = np.empty((n_inf, N_SEEDS))
+    resample_matrix = np.empty((n_inf, N_SEEDS))
+
+    print(f"running {n_inf} inflation values x {N_SEEDS} seeds = {n_inf * N_SEEDS} filter runs")
+    for i, sigma in enumerate(INFLATIONS):
+        for j in range(N_SEEDS):
+            rng = np.random.default_rng(BASE_SEED + j)
+            r = _run_one(float(sigma), cfg, rng)
+            rmse_matrix[i, j] = r["mean_rmse"]
+            spread_matrix[i, j] = r["mean_spread"]
+            resample_matrix[i, j] = r["resample_fraction"]
         print(
-            f"inflation={sigma:5.2f}  RMSE={r['mean_rmse']:5.2f}  "
-            f"spread={r['mean_spread']:5.2f}  resample_frac={r['resample_fraction']:.2f}"
+            f"inflation={sigma:5.2f}  "
+            f"RMSE={rmse_matrix[i].mean():5.2f} ± {rmse_matrix[i].std():.2f}  "
+            f"spread={spread_matrix[i].mean():5.2f} ± {spread_matrix[i].std():.2f}  "
+            f"resample_frac={resample_matrix[i].mean():.2f}"
         )
-        results.append(r)
+
+    sigmas = INFLATIONS
+    rmse_mean = rmse_matrix.mean(axis=1)
+    rmse_std = rmse_matrix.std(axis=1)
+    spread_mean = spread_matrix.mean(axis=1)
 
     OUT_FIG.parent.mkdir(parents=True, exist_ok=True)
     fig, (ax_rmse, ax_spread) = plt.subplots(1, 2, figsize=(11.0, 4.0), constrained_layout=True)
 
-    sigmas = np.array([r["inflation"] for r in results])
-    rmses = np.array([r["mean_rmse"] for r in results])
-    spreads = np.array([r["mean_spread"] for r in results])
-
-    # Left: skill (RMSE) vs inflation.
-    ax_rmse.plot(sigmas, rmses, "o-", color="#1f77b4", lw=1.8, ms=7)
+    # Left: skill (RMSE) vs inflation with ±1σ across-seed envelope.
+    ax_rmse.fill_between(
+        sigmas,
+        rmse_mean - rmse_std,
+        rmse_mean + rmse_std,
+        color="#1f77b4",
+        alpha=0.2,
+        label=f"$\\pm 1\\sigma$ across {N_SEEDS} seeds",
+    )
+    # Individual seed curves, light.
+    for j in range(N_SEEDS):
+        ax_rmse.plot(sigmas, rmse_matrix[:, j], color="#1f77b4", lw=0.6, alpha=0.35)
+    ax_rmse.plot(sigmas, rmse_mean, "o-", color="#0b559f", lw=1.8, ms=7, label="mean")
     ax_rmse.set_xlabel("post-resample inflation $\\sigma$")
     ax_rmse.set_ylabel("mean analysis RMSE")
-    ax_rmse.set_title("Skill vs inflation")
+    ax_rmse.set_title(f"Skill vs inflation  ({N_SEEDS} seeds)")
+    ax_rmse.legend(frameon=False, loc="upper right", fontsize=9)
     ax_rmse.grid(alpha=0.3)
 
-    best = int(np.argmin(rmses))
+    best = int(np.argmin(rmse_mean))
     ax_rmse.annotate(
-        f"optimum\n$\\sigma={sigmas[best]:g}$, RMSE={rmses[best]:.2f}",
-        xy=(sigmas[best], rmses[best]),
-        xytext=(sigmas[best] + 0.3, rmses[best] + 0.8),
-        arrowprops={"arrowstyle": "->", "color": "#1f77b4"},
+        f"optimum\n$\\sigma={sigmas[best]:g}$, RMSE={rmse_mean[best]:.2f}",
+        xy=(sigmas[best], rmse_mean[best]),
+        xytext=(sigmas[best] + 0.3, rmse_mean[best] + 0.8),
+        arrowprops={"arrowstyle": "->", "color": "#0b559f"},
         fontsize=9,
     )
 
-    # Right: skill vs diversity, parameterised by inflation.
-    ax_spread.plot(spreads, rmses, "o-", color="#2ca02c", lw=1.8, ms=7)
-    for s, sig, rm in zip(spreads, sigmas, rmses, strict=True):
+    # Right: skill vs diversity, parameterised by inflation — mean across seeds.
+    ax_spread.plot(spread_mean, rmse_mean, "o-", color="#2ca02c", lw=1.8, ms=7)
+    for s, sig, rm in zip(spread_mean, sigmas, rmse_mean, strict=True):
         ax_spread.annotate(f"$\\sigma={sig:g}$", (s, rm), fontsize=7, alpha=0.7)
-    ax_spread.set_xlabel("ensemble spread (end-of-cycle $\\sigma$)")
-    ax_spread.set_ylabel("mean analysis RMSE")
+    ax_spread.set_xlabel("ensemble spread (end-of-cycle $\\sigma$, seed-mean)")
+    ax_spread.set_ylabel("mean analysis RMSE (seed-mean)")
     ax_spread.set_title("Trade-off: skill vs diversity")
     ax_spread.grid(alpha=0.3)
 
     fig.suptitle(
         "Diversity--memory trade-off on Lorenz-96  "
-        "(paper's headline claim, on the standard benchmark)",
+        f"(paper's headline claim, {N_SEEDS}-seed ensemble)",
         fontsize=11,
         y=1.04,
     )

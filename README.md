@@ -70,26 +70,47 @@ not an artefact of the coupled model.
 
 ![Diversity-memory trade-off on Lorenz-96](docs/_static/l96_diversity_memory.png)
 
-A post-resampling Gaussian inflation sweep. Zero inflation collapses
-the ensemble to duplicates and the filter dies (RMSE ≈ 4.7); too-much
-inflation washes out the accumulated information (RMSE rises again
-past σ ≈ 1). A clean U-curve with optimum at σ ≈ 0.75, RMSE ≈ 1.6.
-The right panel re-parameterises the same sweep as skill vs achieved
+A post-resampling Gaussian inflation sweep, repeated across **5
+independent rng seeds** so that the U-curve is demonstrably not a
+single-seed artefact. Zero inflation collapses the ensemble to
+duplicates and the filter dies (RMSE ≈ 4.75 ± 0.09); too-much
+inflation washes out the accumulated information (RMSE rises back to
+≈ 4.12 ± 0.21 at σ = 2). A clean U-curve with optimum near σ ≈ 0.35,
+RMSE ≈ 1.66 ± 0.41. The across-seed envelope (shaded blue) narrows at
+the endpoints (robust collapse and robust over-noise) and widens at
+the optimum (the filter is on the edge of its stable regime, where
+different seeds land in different minima of the same U). The right
+panel re-parameterises the seed-mean sweep as skill vs achieved
 diversity. Reproduce with `python examples/05_l96_diversity_memory.py`.
 
-### 2. Cycle-length sensitivity (analogue of T10 / T11 / T12)
+### 2. Cycle-length sensitivity — the two intrinsic bounds behind T10 / T11 / T12
 
 ![Lorenz-96 cycle-length sensitivity](docs/_static/l96_cycle_sensitivity.png)
 
-The particle filter beats the free ensemble at short observation
-intervals, is actively *worse* than free near the Lyapunov time
-(≈ 0.42 model time units), and degenerates back toward the free
-baseline beyond the Nyquist bound (≈ 0.83). Both bounds — Lyapunov and
-Nyquist — are present on Lorenz-96 exactly as the paper describes for
-AMOC, but with the tightness order reversed: Lyapunov bites first
-here (it's 0.42 < 0.83), whereas on AMOC the ocean-memory Lyapunov
-time is decades and Nyquist is the binding bound. Same mechanism,
-different ordering. Reproduce with
+The paper's cycle-length finding for AMOC is that two intrinsic
+timescales constrain the usable observation interval:
+
+* the **Lyapunov time** (how fast forecast uncertainty grows without
+  observations), and
+* the **Nyquist bound** (half the period of the dominant spectral
+  mode).
+
+The *tighter* of the two determines where the filter breaks down. On
+AMOC, the coupled-system Lyapunov time is decades while Nyquist is
+~6.7 years (from the 13.3-year AMOC mode), so Nyquist binds and a
+5-year cycle (T11) is optimum.
+
+This figure shows the same two bounds on Lorenz-96, correctly marked.
+On L96 the ordering is reversed: Lyapunov is ~0.42 and the Nyquist
+bound (from the spectral peak in figure 4 below) is ~0.83, so
+Lyapunov binds and the filter breaks down at ~0.4, well before any
+aliasing kicks in. We are **not** claiming L96 reproduces the AMOC
+U-curve — it doesn't, and it cannot, because L96's chaos horizon is
+short relative to its oscillation period. We are claiming both bounds
+exist here, they are measurable, they have the values the theory
+predicts, and which one matters is set by the system, not the
+algorithm. That is the point the paper makes, made visible on a
+benchmark that fits on a laptop. Reproduce with
 `python examples/04_l96_cycle_sensitivity.py`.
 
 ### 3. Diverse-IC ensemble (analogue of T13)
