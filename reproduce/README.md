@@ -1,30 +1,29 @@
-# Reproducing the figures from the paper
+# reproduce/
 
-This directory contains scripts that regenerate every figure in
+This directory is intentionally almost empty.
 
-> Fallah, B. et al. (2026). *Bidirectional AMOC–SST coupling on fast and
-> slow timescales: Causal discovery and particle filter perspectives for
-> paleoclimate reconstruction*. npj Climate and Atmospheric Science (in
-> review).
+The companion paper (Fallah et al., 2026, npj Climate and Atmospheric
+Science, in review) is an Observing System Simulation Experiment using
+100-member ensembles of the coupled CM2Mc-BLING Earth system model,
+integrated for ~100 years each. The raw ensemble output is on the
+order of a terabyte and required several months of cluster wall time
+to produce; it cannot be shipped with this package and re-running it
+would require comparable resources.
 
-The scripts read a small Zenodo data deposit (~5–10 GB) of pre-computed
-ensemble diagnostics; they do **not** require the underlying CM2Mc-BLING
-climate model.
+We therefore make no promise that `pypfda` reproduces every figure in
+the paper from scratch. What this repository does provide:
 
-## Workflow
+- the **methods** the paper relies on (sequential importance
+  resampling, observation tempering, post-resample inflation,
+  max-weight degeneracy cap, Gaspari–Cohn localization), validated on
+  Lorenz-96 in `examples/03_lorenz96_twin.py`;
+- a clean open-source citation target for the algorithm.
 
-```bash
-pip install 'pypfda[paleo,plot]'
-cd reproduce
-bash download_data.sh     # ~5–10 GB to data/
-python fig01_proxy_network.py
-python fig02_nyquist.py
-# ...
-```
+If you need the ensemble data itself — for a review, a follow-up
+analysis, or to reproduce a specific figure — please contact the
+authors (<bijan.fallah@gmail.com>).
 
-Output figures land in `figures/` (created on first run).
-
-## Status
-
-Scripts will be added in v0.2.0, alongside the Zenodo deposit. Until
-then this directory is a placeholder and `download_data.sh` is a stub.
+A small Zenodo deposit of *processed* diagnostics (time series of
+AMOC, ESS, weights, spectra — tens of MB, not terabytes) may be minted
+post-acceptance. If that happens, the scripts that read it will land
+here with a matching DOI.
