@@ -88,14 +88,17 @@ def main() -> None:
     spread_da: list[float] = []
     spread_free: list[float] = []
 
-    # Diagnostic scalar: the first variable of the truth, and the
-    # ensemble means, plotted over time so the "pulling-together"
-    # behaviour is visible.
+    # Diagnostic scalar: the first variable of the truth, of each
+    # ensemble member, and of the ensemble means, over time. Member
+    # trajectories are overplotted with low alpha in the figure so the
+    # "pulling-together" behaviour is visible.
     truth_x0: list[float] = []
     da_mean_x0: list[float] = []
     free_mean_x0: list[float] = []
+    da_members_x0 = np.empty((N_CYCLES, cfg.n_members))
+    free_members_x0 = np.empty((N_CYCLES, cfg.n_members))
 
-    for _ in range(N_CYCLES):
+    for cycle_i in range(N_CYCLES):
         truth = integrate(truth, N_STEPS_PER_OBS, DT)
         ensemble_da = integrate(ensemble_da, N_STEPS_PER_OBS, DT)
         ensemble_free = integrate(ensemble_free, N_STEPS_PER_OBS, DT)
@@ -124,6 +127,8 @@ def main() -> None:
         truth_x0.append(float(truth[0]))
         da_mean_x0.append(float(mean_da[0]))
         free_mean_x0.append(float(mean_free[0]))
+        da_members_x0[cycle_i] = ensemble_da[:, 0]
+        free_members_x0[cycle_i] = ensemble_free[:, 0]
 
     print(f"Mean RMSE  DA   (cycles 20+) = {np.mean(rmse_da[20:]):.3f}")
     print(f"Mean RMSE  FREE (cycles 20+) = {np.mean(rmse_free[20:]):.3f}")
@@ -131,19 +136,25 @@ def main() -> None:
     print(f"Mean spread FREE (end) = {np.mean(spread_free[-20:]):.3f}")
 
     OUT_FIG.parent.mkdir(parents=True, exist_ok=True)
-    fig, (ax_ts, ax_rmse) = plt.subplots(1, 2, figsize=(11.0, 4.0), constrained_layout=True)
+    fig, (ax_ts, ax_rmse) = plt.subplots(1, 2, figsize=(12.0, 4.5), constrained_layout=True)
 
     t_obs = np.arange(N_CYCLES) * OBS_INTERVAL
 
-    # Left: first variable trajectory. Black = truth, blue = DA mean,
-    # grey = free mean. Shows DA locking onto truth while free drifts.
-    ax_ts.plot(t_obs, truth_x0, color="black", lw=1.4, label="truth", zorder=3)
-    ax_ts.plot(t_obs, da_mean_x0, color="#1f77b4", lw=1.2, label="DA mean", zorder=2)
-    ax_ts.plot(t_obs, free_mean_x0, color="#999999", lw=1.0, label="free mean", zorder=1)
+    # Left: first variable trajectory. Each ensemble member plotted at
+    # low alpha so the spread is visible, with the means on top and
+    # the truth on top of that.
+    ax_ts.plot(t_obs, free_members_x0, color="#b0b0b0", lw=0.5, alpha=0.06, zorder=1)
+    ax_ts.plot(t_obs, da_members_x0, color="#1f77b4", lw=0.5, alpha=0.06, zorder=2)
+    ax_ts.plot(t_obs, free_mean_x0, color="#555555", lw=1.2, label="free mean", zorder=3)
+    ax_ts.plot(t_obs, da_mean_x0, color="#0b559f", lw=1.4, label="DA mean", zorder=4)
+    ax_ts.plot(t_obs, truth_x0, color="black", lw=1.4, label="truth", zorder=5)
+    # Legend proxy for the member clouds (matplotlib won't legend alpha<1 cleanly).
+    ax_ts.plot([], [], color="#1f77b4", lw=3, alpha=0.35, label="DA members")
+    ax_ts.plot([], [], color="#999999", lw=3, alpha=0.35, label="free members")
     ax_ts.set_xlabel("model time")
     ax_ts.set_ylabel("$x_0$")
-    ax_ts.set_title("First-variable trajectory from diverse ICs")
-    ax_ts.legend(frameon=False, loc="upper right")
+    ax_ts.set_title(f"First-variable trajectory from diverse ICs  (N={cfg.n_members})")
+    ax_ts.legend(frameon=False, loc="upper right", fontsize=8)
     ax_ts.grid(alpha=0.3)
 
     # Right: RMSE time series.
