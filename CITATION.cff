@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: "pypfda: Particle filter data assimilation in pure Python"
+message: "If you use this software, please cite both the software and the methodological paper below."
+type: software
+authors:
+  - given-names: Bijan
+    family-names: Fallah
+    email: bijan.fallah01@gmail.com
+    affiliation: Potsdam Institute for Climate Impact Research (PIK)
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+repository-code: "https://github.com/bijanf/pypfda"
+url: "https://bijanf.github.io/pypfda"
+license: MIT
+keywords:
+  - data assimilation
+  - particle filter
+  - sequential Monte Carlo
+  - paleoclimate
+  - AMOC
+  - climate
+preferred-citation:
+  type: article
+  title: "Bidirectional AMOC–SST coupling on fast and slow timescales: Causal discovery and particle filter perspectives for paleoclimate reconstruction"
+  authors:
+    - given-names: Bijan
+      family-names: Fallah
+      affiliation: Potsdam Institute for Climate Impact Research (PIK)
+  journal: "npj Climate and Atmospheric Science"
+  year: 2026
+  status: in-review
