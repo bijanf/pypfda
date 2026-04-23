@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     post-resample Gaussian inflation, and max-weight degeneracy cap;
     produces the reference figure embedded in the README
     (`docs/_static/lorenz96_demo.png`).
+  - Paper-claim analogues on Lorenz-96: cycle-length sensitivity
+    (`04_l96_cycle_sensitivity.py`), diversity–memory trade-off
+    (`05_l96_diversity_memory.py`), diverse-IC robustness
+    (`06_l96_diverse_ics.py`), Welch / Nyquist spectral analysis
+    (`07_l96_nyquist.py`). Shared Lorenz-96 helpers factored into
+    `examples/_l96_common.py`.
   - Sphinx documentation skeleton with Furo theme.
   - Continuous integration on Linux, macOS, and Windows for Python
     3.10–3.12.

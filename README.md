@@ -57,6 +57,37 @@ in an online coupled-climate-model OSSE; Lorenz-96 is the smallest
 chaotic benchmark on which those techniques can be exhibited end-to-end
 without a climate model in the loop.
 
+## Paper claims reproduced on Lorenz-96
+
+Four of the paper's central methodological findings re-expressed on
+Lorenz-96. Each is a self-contained script that runs on a laptop in
+seconds to a few minutes and writes a single figure to
+`docs/_static/`. These are analogues, not reproductions — Lorenz-96 is
+not AMOC — but they demonstrate that the filter's qualitative
+behaviour is not an artefact of the coupled model.
+
+| Paper claim | Lorenz-96 script | Figure |
+|---|---|---|
+| Diversity–memory trade-off (§5, headline) | `examples/05_l96_diversity_memory.py` | `docs/_static/l96_diversity_memory.png` |
+| Cycle-length sensitivity (T10 / T11 / T12) | `examples/04_l96_cycle_sensitivity.py` | `docs/_static/l96_cycle_sensitivity.png` |
+| Diverse-IC robustness (T13) | `examples/06_l96_diverse_ics.py` | `docs/_static/l96_diverse_ics.png` |
+| Nyquist / spectral argument (§4, Fig. 2) | `examples/07_l96_nyquist.py` | `docs/_static/l96_spectrum.png` |
+
+Two honest caveats the scripts' docstrings spell out in detail:
+
+1. The **diversity–memory trade-off** reproduces cleanly: the skill
+   curve as a function of inflation amplitude is U-shaped, with a
+   well-defined optimum around σ ≈ 0.75 on L96.
+2. The **cycle-length** and **Nyquist** experiments show the *same
+   two bounds* the paper argues for — Lyapunov and Nyquist — but in
+   the opposite order. Lorenz-96's Lyapunov time (~0.42) is tighter
+   than its Nyquist bound (~0.83), so the filter fails first from
+   Lyapunov divergence; the AMOC regime is the one where Lyapunov
+   is decades and Nyquist is the binding bound, which is why the
+   paper's T11 optimum appears there and not here. Same mechanism,
+   different ordering. The scripts document this contrast explicitly
+   rather than papering over it.
+
 ## Scope — what `pypfda` is and is not
 
 `pypfda` ships the **data-assimilation method**, not a turnkey coupling
