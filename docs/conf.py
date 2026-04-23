@@ -87,4 +87,3 @@ nitpicky = False
 # from both the package re-export and the underlying submodule. The
 # resulting docs are correct; the warning is cosmetic.
 suppress_warnings = ["autosectionlabel.*"]
-
