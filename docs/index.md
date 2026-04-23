@@ -23,6 +23,7 @@ theory/particle_filter
 :caption: Tutorials
 
 tutorials/01_lorenz63
+tutorials/02_paper_claims_on_l96
 ```
 
 ```{toctree}

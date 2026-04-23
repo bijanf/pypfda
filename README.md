@@ -63,30 +63,63 @@ Four of the paper's central methodological findings re-expressed on
 Lorenz-96. Each is a self-contained script that runs on a laptop in
 seconds to a few minutes and writes a single figure to
 `docs/_static/`. These are analogues, not reproductions — Lorenz-96 is
-not AMOC — but they demonstrate that the filter's qualitative
-behaviour is not an artefact of the coupled model.
+not AMOC — but they show that the filter's qualitative behaviour is
+not an artefact of the coupled model.
 
-| Paper claim | Lorenz-96 script | Figure |
-|---|---|---|
-| Diversity–memory trade-off (§5, headline) | `examples/05_l96_diversity_memory.py` | `docs/_static/l96_diversity_memory.png` |
-| Cycle-length sensitivity (T10 / T11 / T12) | `examples/04_l96_cycle_sensitivity.py` | `docs/_static/l96_cycle_sensitivity.png` |
-| Diverse-IC robustness (T13) | `examples/06_l96_diverse_ics.py` | `docs/_static/l96_diverse_ics.png` |
-| Nyquist / spectral argument (§4, Fig. 2) | `examples/07_l96_nyquist.py` | `docs/_static/l96_spectrum.png` |
+### 1. Diversity–memory trade-off (§5, headline claim)
 
-Two honest caveats the scripts' docstrings spell out in detail:
+![Diversity-memory trade-off on Lorenz-96](docs/_static/l96_diversity_memory.png)
 
-1. The **diversity–memory trade-off** reproduces cleanly: the skill
-   curve as a function of inflation amplitude is U-shaped, with a
-   well-defined optimum around σ ≈ 0.75 on L96.
-2. The **cycle-length** and **Nyquist** experiments show the *same
-   two bounds* the paper argues for — Lyapunov and Nyquist — but in
-   the opposite order. Lorenz-96's Lyapunov time (~0.42) is tighter
-   than its Nyquist bound (~0.83), so the filter fails first from
-   Lyapunov divergence; the AMOC regime is the one where Lyapunov
-   is decades and Nyquist is the binding bound, which is why the
-   paper's T11 optimum appears there and not here. Same mechanism,
-   different ordering. The scripts document this contrast explicitly
-   rather than papering over it.
+A post-resampling Gaussian inflation sweep. Zero inflation collapses
+the ensemble to duplicates and the filter dies (RMSE ≈ 4.7); too-much
+inflation washes out the accumulated information (RMSE rises again
+past σ ≈ 1). A clean U-curve with optimum at σ ≈ 0.75, RMSE ≈ 1.6.
+The right panel re-parameterises the same sweep as skill vs achieved
+diversity. Reproduce with `python examples/05_l96_diversity_memory.py`.
+
+### 2. Cycle-length sensitivity (analogue of T10 / T11 / T12)
+
+![Lorenz-96 cycle-length sensitivity](docs/_static/l96_cycle_sensitivity.png)
+
+The particle filter beats the free ensemble at short observation
+intervals, is actively *worse* than free near the Lyapunov time
+(≈ 0.42 model time units), and degenerates back toward the free
+baseline beyond the Nyquist bound (≈ 0.83). Both bounds — Lyapunov and
+Nyquist — are present on Lorenz-96 exactly as the paper describes for
+AMOC, but with the tightness order reversed: Lyapunov bites first
+here (it's 0.42 < 0.83), whereas on AMOC the ocean-memory Lyapunov
+time is decades and Nyquist is the binding bound. Same mechanism,
+different ordering. Reproduce with
+`python examples/04_l96_cycle_sensitivity.py`.
+
+### 3. Diverse-IC ensemble (analogue of T13)
+
+![Diverse-IC ensemble on Lorenz-96](docs/_static/l96_diverse_ics.png)
+
+Each of 200 members is independently spun up on the attractor, so
+the initial ensemble is maximally diverse. Left: the first state
+variable over time. DA (blue) tracks the truth (black); the free
+ensemble mean (grey) collapses to climatology because averaging
+uncorrelated attractor trajectories returns the attractor mean.
+Right: ensemble-mean RMSE over time. DA pulls the scattered ensemble
+onto the truth trajectory without shared initial-state memory,
+matching the paper's T13 finding. Reproduce with
+`python examples/06_l96_diverse_ics.py`.
+
+### 4. Welch spectrum and the Nyquist argument (§4, Figure 2 analogue)
+
+![Welch spectrum and autocorrelation of Lorenz-96](docs/_static/l96_spectrum.png)
+
+A 2000-unit control integration of Lorenz-96 shows a genuine spectral
+peak at T ≈ 1.65 model time units with peak / median power ratio
+≈ 134 — sharp, not broadband. The corresponding Nyquist bound (T/2
+≈ 0.83) is the same one overlaid on figure 2 above. The
+autocorrelation panel independently reports an e-folding time of
+0.30, consistent with the Lyapunov-limited predictability horizon.
+Reproduce with `python examples/07_l96_nyquist.py`.
+
+The walk-through with derivations and extra figures lives in the docs
+at [*Paper claims reproduced on Lorenz-96*](https://bijanf.github.io/pypfda/tutorials/02_paper_claims_on_l96.html).
 
 ## Scope — what `pypfda` is and is not
 
