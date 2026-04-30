@@ -2,7 +2,7 @@
 
 The companion paper
 ([Fallah et al., 2026](https://github.com/bijanf/pypfda#citing-pypfda),
-in review at *npj Climate and Atmospheric Science*) makes four
+in preparation) makes four
 methodological claims about online particle filtering that are easy
 to lose track of because they emerge from an expensive coupled-model
 OSSE. This tutorial re-expresses each one on the standard Lorenz-96

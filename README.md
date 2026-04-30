@@ -16,9 +16,8 @@ support for paleoclimate Observing System Simulation Experiments (OSSEs).
 [![status: work in progress](https://img.shields.io/badge/status-work_in_progress-orange.svg)](#status)
 
 > **Status — work in progress.**
-> `pypfda` is the open-source companion to a paper currently under
-> review at *npj Climate and Atmospheric Science*
-> ([Fallah et al., 2026](#citing-pypfda)). The core particle filter,
+> `pypfda` is the open-source companion to a paper currently in
+> preparation ([Fallah et al., 2026](#citing-pypfda)). The core particle filter,
 > weight / ESS / resampling primitives, observation tempering,
 > post-resample inflation, max-weight degeneracy cap and Gaspari–Cohn
 > localization are in place and tested; higher-level diagnostics
@@ -258,8 +257,7 @@ If you use `pypfda` in published work, please cite the software (via the
 
 > Fallah, B., et al. (2026). Bidirectional AMOC–SST coupling on fast and
 > slow timescales: Causal discovery and particle filter perspectives for
-> paleoclimate reconstruction. *npj Climate and Atmospheric Science*, in
-> review.
+> paleoclimate reconstruction. In preparation.
 
 A BibTeX snippet is provided in [CITATION.cff](CITATION.cff).
 

@@ -2,9 +2,9 @@
 
 This directory is intentionally almost empty.
 
-The companion paper (Fallah et al., 2026, npj Climate and Atmospheric
-Science, in review) is an Observing System Simulation Experiment using
-100-member ensembles of the coupled CM2Mc-BLING Earth system model,
+The companion paper (Fallah et al., 2026, in preparation) is an
+Observing System Simulation Experiment using 100-member ensembles of
+the coupled CM2Mc-BLING Earth system model,
 integrated for ~100 years each. The raw ensemble output is on the
 order of a terabyte and required several months of cluster wall time
 to produce; it cannot be shipped with this package and re-running it

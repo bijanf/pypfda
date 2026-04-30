@@ -74,8 +74,7 @@ resampling). For systems with long memory (deep ocean circulation, ice
 sheets), inflation undoes the very thing that makes online filtering
 attractive: it scrambles the slowly-evolving state that integrates past
 observational corrections forward in time. This *diversity–memory
-trade-off* is discussed at length in Fallah et al. (2026, *npj Climate
-and Atmospheric Science*, in review).
+trade-off* is discussed at length in Fallah et al. (2026, in preparation).
 
 ## References
 
