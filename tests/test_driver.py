@@ -125,8 +125,8 @@ def test_gaussian_loglik_nan_drops_missing_proxies():
     pred = np.array([[1.0, np.nan], [5.0, np.nan]])
     obs = np.array([1.0, np.nan])
     ll = gaussian_loglik_nan(pred, obs, 1.0)
-    assert ll[0] == pytest.approx(0.0)        # perfect on the valid proxy
-    assert ll[1] == pytest.approx(-8.0)       # -0.5 * ((5-1)/1)^2
+    assert ll[0] == pytest.approx(0.0)  # perfect on the valid proxy
+    assert ll[1] == pytest.approx(-8.0)  # -0.5 * ((5-1)/1)^2
     # a member with no valid proxies gets zero weight
     ll2 = gaussian_loglik_nan(np.array([[np.nan]]), np.array([np.nan]), 1.0)
     assert ll2[0] == -np.inf
@@ -135,6 +135,7 @@ def test_gaussian_loglik_nan_drops_missing_proxies():
 def test_checkpoint_resume(tmp_path):
     """A run that stops at cycle 5 and resumes must reach the same place as an
     uninterrupted 10-cycle run would in cycle count + genealogy length."""
+
     def make(n_cycles):
         model = RandomWalkTwin(20, q=1.0, seed=7)
         r = np.random.default_rng(8)
@@ -142,14 +143,18 @@ def test_checkpoint_resume(tmp_path):
             model.initialize_member(i, r.normal(0, 3))
         pf = ParticleFilter(ess_threshold=0.8, max_weight=0.3, rng=np.random.default_rng(9))
         return CycleDriver(
-            model=model, pf=pf,
+            model=model,
+            pf=pf,
             observations=lambda c: (np.array([_truth(c)]), 0.5),
-            n_cycles=n_cycles, window=1.0, inflation_amplitude=0.5,
-            outdir=str(tmp_path), resume=True,
+            n_cycles=n_cycles,
+            window=1.0,
+            inflation_amplitude=0.5,
+            outdir=str(tmp_path),
+            resume=True,
         )
 
     h1 = make(5).run()
     assert len(h1["cycle"]) == 5
-    h2 = make(10).run()           # resumes from the checkpoint
+    h2 = make(10).run()  # resumes from the checkpoint
     assert h2["cycle"] == list(range(10))
     assert len(h2["targets"]) == 10

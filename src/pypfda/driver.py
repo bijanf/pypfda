@@ -27,9 +27,10 @@ this choreography.
 from __future__ import annotations
 
 import json
-import os
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Callable, Sequence
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -43,6 +44,9 @@ from pypfda.models.base import ForwardModel
 # synthetic truth; for a real reconstruction it returns the proxy values.
 ObsProvider = Callable[[int], "tuple[NDArray[np.floating], NDArray[np.floating] | float]"]
 
+#: Run history: named lists, one entry appended per completed cycle.
+History = dict[str, list[Any]]
+
 
 # ---------------------------------------------------------------------------
 # Execution backends — how the per-member forecast for one cycle is run.
@@ -55,16 +59,16 @@ class ExecutionBackend:
     advanced by ``window`` and is ready for :meth:`ForwardModel.observe`.
     """
 
-    def run_forecasts(
-        self, model: ForwardModel, member_ids: Sequence[int], window: float
-    ) -> None:
+    def run_forecasts(self, model: ForwardModel, member_ids: Sequence[int], window: float) -> None:
+        """Forecast every member in ``member_ids`` by ``window`` (override for parallelism)."""
         raise NotImplementedError
 
 
 class SerialBackend(ExecutionBackend):
     """Forecast members one after another. Simplest; correct everywhere."""
 
-    def run_forecasts(self, model, member_ids, window):
+    def run_forecasts(self, model: ForwardModel, member_ids: Sequence[int], window: float) -> None:
+        """Forecast members sequentially."""
         for i in member_ids:
             model.forecast(i, window)
 
@@ -113,9 +117,7 @@ def gaussian_loglik_nan(
     obs = np.asarray(observations, dtype=float)
     sigma = np.broadcast_to(np.asarray(obs_err, dtype=float), obs.shape)
     if pred.ndim != 2 or obs.shape != (pred.shape[1],):
-        raise ValueError(
-            f"shape mismatch: ensemble_obs {pred.shape}, observations {obs.shape}"
-        )
+        raise ValueError(f"shape mismatch: ensemble_obs {pred.shape}, observations {obs.shape}")
     if np.any(sigma <= 0):
         raise ValueError("obs_err must be strictly positive")
 
@@ -173,14 +175,15 @@ class CycleDriver:
     outdir: str | None = None
     resume: bool = True
 
-    def _ckpt_path(self) -> str | None:
-        return os.path.join(self.outdir, "pypfda_driver_state.json") if self.outdir else None
+    def _ckpt_path(self) -> Path | None:
+        """Return the JSON checkpoint path, or ``None`` if no ``outdir`` was set."""
+        return Path(self.outdir) / "pypfda_driver_state.json" if self.outdir else None
 
-    def _maybe_resume(self, n: int):
-        """Return (start_cycle, genealogy, history)."""
+    def _maybe_resume(self, n: int) -> tuple[int, NDArray[np.integer], History]:
+        """Return ``(start_cycle, genealogy, history)``, resuming if a checkpoint exists."""
         path = self._ckpt_path()
-        if self.resume and path and os.path.exists(path):
-            with open(path) as f:
+        if self.resume and path and path.exists():
+            with path.open() as f:
                 d = json.load(f)
             if d.get("n_members") == n:
                 return (
@@ -189,19 +192,25 @@ class CycleDriver:
                     {k: list(v) for k, v in d["history"].items()},
                 )
         genealogy = np.arange(n, dtype=int)
-        history = {
-            "cycle": [], "ess": [], "ess_fraction": [], "resampled": [],
-            "eas": [], "mean_loglik": [], "targets": [],
+        history: History = {
+            "cycle": [],
+            "ess": [],
+            "ess_fraction": [],
+            "resampled": [],
+            "eas": [],
+            "mean_loglik": [],
+            "targets": [],
         }
         return 0, genealogy, history
 
-    def _checkpoint(self, cycle, genealogy, history):
+    def _checkpoint(self, cycle: int, genealogy: NDArray[np.integer], history: History) -> None:
+        """Atomically write the driver state (genealogy + history + cycle) to ``outdir``."""
         path = self._ckpt_path()
         if not path:
             return
-        os.makedirs(self.outdir, exist_ok=True)
-        tmp = path + ".tmp"
-        with open(tmp, "w") as f:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".json.tmp")
+        with tmp.open("w") as f:
             json.dump(
                 {
                     "completed_cycle": int(cycle),
@@ -211,9 +220,9 @@ class CycleDriver:
                 },
                 f,
             )
-        os.replace(tmp, path)  # atomic
+        tmp.replace(path)  # atomic
 
-    def run(self) -> dict:
+    def run(self) -> History:
         """Run all cycles and return the ``history`` dict."""
         n = self.model.n_members
         start, genealogy, history = self._maybe_resume(n)
@@ -234,6 +243,7 @@ class CycleDriver:
 
             # ---- RESAMPLE state + INFLATE ----
             if info.resampled:
+                assert info.indices is not None  # guaranteed non-None when resampled
                 parents = np.asarray(info.indices, dtype=int)
                 # Snapshot every distinct parent BEFORE applying any clone so
                 # swaps/cycles among members are safe (see get_state contract).
@@ -244,7 +254,8 @@ class CycleDriver:
                 genealogy = genealogy[parents]
                 for k in range(n):
                     self.model.inflate(
-                        k, self.inflation_amplitude,
+                        k,
+                        self.inflation_amplitude,
                         seed=self.base_seed + 100_000 + cycle * 1000 + k,
                     )
 
