@@ -184,7 +184,10 @@ def cap_max_weight(
 
     w = normalize_log_weights(lw)
     if np.max(w) <= max_weight:
-        return cast("NDArray[np.floating]", np.log(w))
+        # Clip before log: in the peaked-weight regime this cap exists for,
+        # small weights underflow to exactly 0 and np.log(0) would raise a
+        # divide-by-zero. The floor is negligible after re-normalization.
+        return cast("NDArray[np.floating]", np.log(np.clip(w, 1e-300, None)))
 
     # Cap the top weight; spread the surplus across the remaining particles
     # in proportion to their current weights.
