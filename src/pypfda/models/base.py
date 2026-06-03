@@ -130,10 +130,10 @@ class ForwardModel(ABC):
         density-compensated T/S in an ocean). ``amplitude == 0`` should leave
         the state untouched.
         """
-        return None
+        return
 
     def target_diagnostic(self, member_id: int) -> float:
-        """Optional scalar to *evaluate* (never assimilated), e.g. AMOC strength.
+        """Return an optional scalar to *evaluate* (never assimilated), e.g. AMOC strength.
 
         The driver records this per member per cycle so skill against a known
         truth can be scored offline. Default ``NaN`` (not tracked).
@@ -141,5 +141,5 @@ class ForwardModel(ABC):
         return float("nan")
 
     def finalize(self) -> None:
-        """Optional cleanup hook, called once when the run ends (default no-op)."""
-        return None
+        """Run optional end-of-run cleanup (default: no-op)."""
+        return
