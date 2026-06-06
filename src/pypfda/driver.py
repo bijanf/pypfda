@@ -73,6 +73,31 @@ class SerialBackend(ExecutionBackend):
             model.forecast(i, window)
 
 
+class ThreadPoolBackend(ExecutionBackend):
+    """Forecast members concurrently with a bounded thread pool.
+
+    Ideal for adapters whose :meth:`ForwardModel.forecast` blocks on an external
+    process (a subprocess model run): the GIL is released during the blocking
+    call, so ``max_workers`` members integrate at once. Size ``max_workers`` to
+    ``cores // threads_per_member`` for a subprocess model. The first forecast to
+    raise aborts the cycle (its exception propagates).
+    """
+
+    def __init__(self, max_workers: int = 8):
+        if max_workers < 1:
+            raise ValueError("max_workers must be >= 1")
+        self.max_workers = max_workers
+
+    def run_forecasts(self, model: ForwardModel, member_ids: Sequence[int], window: float) -> None:
+        """Forecast every member concurrently, re-raising the first failure."""
+        from concurrent.futures import ThreadPoolExecutor
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
+            futures = [pool.submit(model.forecast, i, window) for i in member_ids]
+            for fut in futures:
+                fut.result()  # propagate the first exception
+
+
 # ---------------------------------------------------------------------------
 # Diagnostics
 # ---------------------------------------------------------------------------
@@ -200,6 +225,7 @@ class CycleDriver:
             "eas": [],
             "mean_loglik": [],
             "targets": [],
+            "parents": [],
         }
         return 0, genealogy, history
 
@@ -269,6 +295,14 @@ class CycleDriver:
             history["eas"].append(float(eas))
             history["mean_loglik"].append(float(np.mean(finite)) if finite.size else float("nan"))
             history["targets"].append([float(self.model.target_diagnostic(i)) for i in range(n)])
+            # Persist the per-cycle resample mapping (parent index chosen for each
+            # child; identity when no resampling). With these, the ANALYSIS
+            # (weighted/resampled) ensemble mean can be reconstructed offline from
+            # the per-member forecast diagnostics WITHOUT re-running the model.
+            history.setdefault("parents", []).append(
+                [int(p) for p in (info.indices if info.resampled and info.indices is not None
+                                  else range(n))]
+            )
             self._checkpoint(cycle, genealogy, history)
 
         self.model.finalize()
