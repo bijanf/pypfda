@@ -20,7 +20,7 @@ keywords:
   - climate
 preferred-citation:
   type: article
-  title: "Bidirectional AMOC–SST coupling on fast and slow timescales: Causal discovery and particle filter perspectives for paleoclimate reconstruction"
+  title: "Online Particle Filter Data Assimilation for AMOC Reconstruction: A Diversity–Memory Trade-off in Observing System Simulation Experiments"
   authors:
     - given-names: Bijan
       family-names: Fallah
