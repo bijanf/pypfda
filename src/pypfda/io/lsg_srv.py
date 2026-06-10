@@ -33,7 +33,9 @@ This module is dependency-light (numpy only) so it is testable without the model
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -66,7 +68,7 @@ AMOC_BAND_TOKEN = 5  # 0-based index into the line's whitespace tokens (16-44N)
 # ---------------------------------------------------------------------------
 def _iter_srv_fields(
     path: Path, nlon: int = IEN, nlat: int = JEN
-):
+) -> Iterator[tuple[int, int, int, NDArray[np.floating[Any]]]]:
     """Yield ``(code, level, idate, field)`` for every 2-D record in an srv file.
 
     ``field`` is a ``(nlat, nlon)`` float64 array (the Fortran data record is
@@ -101,9 +103,9 @@ def _iter_srv_fields(
         off += 8 + m1
 
 
-def _last_field(path: Path, code: int, level: int) -> NDArray[np.floating] | None:
+def _last_field(path: Path, code: int, level: int) -> NDArray[np.floating[Any]] | None:
     """Return the last ``(nlat, nlon)`` field matching ``code`` and ``level``."""
-    out: NDArray[np.floating] | None = None
+    out: NDArray[np.floating[Any]] | None = None
     for c, lev, _idate, field in _iter_srv_fields(path):
         if c == code and lev == level:
             out = field
@@ -113,7 +115,7 @@ def _last_field(path: Path, code: int, level: int) -> NDArray[np.floating] | Non
 # ---------------------------------------------------------------------------
 # Grid coordinates
 # ---------------------------------------------------------------------------
-def lsg_grid(grad: float = 5.0) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
+def lsg_grid(grad: float = 5.0) -> tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]]]:
     """Return nominal ``(lon, lat)`` 1-D cell-centre arrays of the LSG grid.
 
     LSG runs on a rotated, staggered E-grid: latitudes follow
@@ -134,7 +136,7 @@ def lsg_grid(grad: float = 5.0) -> tuple[NDArray[np.floating], NDArray[np.floati
 
 def lsg_grid_from_restart(
     restart_path: Path,
-) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
+) -> tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]]]:
     """Return exact ``(lon, lat)`` 1-D arrays read from an LSG restart header.
 
     An LSG restart (``kleiauf`` / ``kleiin1``) is Fortran sequential-unformatted;
@@ -166,7 +168,7 @@ def lsg_grid_from_restart(
 # ---------------------------------------------------------------------------
 def read_lsg_surface_temp(
     path: Path,
-) -> tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
+) -> tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]], NDArray[np.floating[Any]]]:
     """Return the last surface SST field and grid from an LSG ``lsg_output`` file.
 
     Reads the most recent surface potential-temperature record (code -2, level
@@ -223,4 +225,4 @@ def read_lsg_amoc_from_diag(plasim_diag_path: Path) -> float:
 def wet_mask_lsg(path: Path) -> NDArray[np.bool_]:
     """Return the ``(nlat, nlon)`` ocean mask (``True`` = wet) from ``lsg_output``."""
     sst, _lon, _lat = read_lsg_surface_temp(path)
-    return ~np.isnan(sst)
+    return cast("NDArray[np.bool_]", ~np.isnan(sst))

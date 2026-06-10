@@ -7,7 +7,7 @@ return float arrays of shape ``(n_members,)``.
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -18,7 +18,7 @@ def gaussian_log_likelihood(
     ensemble_obs: ArrayLike,
     observations: ArrayLike,
     obs_err: ArrayLike | float,
-) -> NDArray[np.floating]:
+) -> NDArray[np.floating[Any]]:
     r"""Log-likelihood of each ensemble member under a diagonal Gaussian observation model.
 
     For ensemble member :math:`m` with predicted observations
@@ -69,10 +69,10 @@ def gaussian_log_likelihood(
         raise ValueError("obs_err must be strictly positive")
 
     residuals = (pred - obs) / sigma
-    return cast("NDArray[np.floating]", -0.5 * np.sum(residuals**2, axis=1))
+    return cast("NDArray[np.floating[Any]]", -0.5 * np.sum(residuals**2, axis=1))
 
 
-def normalize_log_weights(log_weights: ArrayLike) -> NDArray[np.floating]:
+def normalize_log_weights(log_weights: ArrayLike) -> NDArray[np.floating[Any]]:
     """Normalize log-weights to a probability vector summing to one.
 
     Uses the log-sum-exp trick so the result is numerically stable even
@@ -94,7 +94,7 @@ def normalize_log_weights(log_weights: ArrayLike) -> NDArray[np.floating]:
         raise ValueError(f"log_weights must be 1-D; got shape {lw.shape}")
     if not np.all(np.isfinite(lw)):
         raise ValueError("log_weights must be finite")
-    return cast("NDArray[np.floating]", np.exp(lw - logsumexp(lw)))
+    return cast("NDArray[np.floating[Any]]", np.exp(lw - logsumexp(lw)))
 
 
 def effective_sample_size(weights: ArrayLike) -> float:
@@ -154,7 +154,7 @@ def weight_entropy(weights: ArrayLike) -> float:
 def cap_max_weight(
     log_weights: ArrayLike,
     max_weight: float,
-) -> NDArray[np.floating]:
+) -> NDArray[np.floating[Any]]:
     """Clip the largest particle weight to prevent degeneracy.
 
     Implements the simple "max-weight" heuristic from `DA_T9b`: if the
@@ -187,7 +187,7 @@ def cap_max_weight(
         # Clip before log: in the peaked-weight regime this cap exists for,
         # small weights underflow to exactly 0 and np.log(0) would raise a
         # divide-by-zero. The floor is negligible after re-normalization.
-        return cast("NDArray[np.floating]", np.log(np.clip(w, 1e-300, None)))
+        return cast("NDArray[np.floating[Any]]", np.log(np.clip(w, 1e-300, None)))
 
     # Cap the top weight; spread the surplus across the remaining particles
     # in proportion to their current weights.
@@ -204,4 +204,4 @@ def cap_max_weight(
         capped[top] = max_weight
     capped = np.clip(capped, a_min=1e-300, a_max=None)
     capped /= capped.sum()
-    return cast("NDArray[np.floating]", np.log(capped))
+    return cast("NDArray[np.floating[Any]]", np.log(capped))

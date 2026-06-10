@@ -1,4 +1,4 @@
-"""Coupled fast--slow Lorenz reference adapters: in-process :class:`ForwardModel`\\s.
+r"""Coupled fast--slow Lorenz reference adapters: in-process :class:`ForwardModel` subclasses.
 
 Where :mod:`pypfda.models.climberx` and :mod:`pypfda.models.plasim` plug *coupled
 GCMs* into the particle-filter cycle through restart files and subprocesses, this
@@ -17,21 +17,21 @@ Two systems are provided:
     small-scale variables :math:`Y_{j,k}`,
 
     .. math::
-        \\dot X_k &= -X_{k-1}(X_{k-2}-X_{k+1}) - X_k + F
-                   - \\tfrac{hc}{b}\\sum_j Y_{j,k}, \\\\
-        \\dot Y_{j,k} &= -cb\\,Y_{j+1,k}(Y_{j+2,k}-Y_{j-1,k}) - c\\,Y_{j,k}
-                       + \\tfrac{hc}{b} X_k ,
+        \dot X_k &= -X_{k-1}(X_{k-2}-X_{k+1}) - X_k + F
+                   - \tfrac{hc}{b}\sum_j Y_{j,k}, \\
+        \dot Y_{j,k} &= -cb\,Y_{j+1,k}(Y_{j+2,k}-Y_{j-1,k}) - c\,Y_{j,k}
+                       + \tfrac{hc}{b} X_k ,
 
     with the fast variables forming one cyclic ring of length ``J*K``. The
     observation operator samples a stride of the fast ring; the evaluation target
-    is the slow large-scale index :math:`\\bar X = K^{-1}\\sum_k X_k` (the "AMOC"
+    is the slow large-scale index :math:`\bar X = K^{-1}\sum_k X_k` (the "AMOC"
     analogue).
 
 ``CoupledLorenz63``
     A two-timescale coupled Lorenz-63 system in the spirit of Pena & Kalnay
     (2004): a fast "atmosphere" subsystem :math:`(x_f,y_f,z_f)` two-way coupled
     to a slow "ocean" subsystem :math:`(x_s,y_s,z_s)` that evolves at a fraction
-    :math:`\\varepsilon` of the fast rate. The fast subsystem is observed; the
+    :math:`\varepsilon` of the fast rate. The fast subsystem is observed; the
     slow variable :math:`x_s` is the reconstruction target.
 
 Both adapters hold the whole ensemble as an in-process array, so
@@ -42,14 +42,14 @@ files -- contrast the GCM adapters, which clone restart directories. The same
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 from numpy.typing import NDArray
 
 from pypfda.models.base import ForwardModel
 
-FloatArray = NDArray[np.floating]
+FloatArray = NDArray[np.floating[Any]]
 
 
 # ===========================================================================
@@ -135,7 +135,9 @@ class TwoScaleLorenz96(ForwardModel):
         self.F, self.h, self.c, self.b = float(F), float(h), float(c), float(b)
         self.dt = float(dt)
         self.dim = self.K + self.J * self.K
-        self.obs_idx = np.arange(self.K, self.dim, int(obs_stride))  # indices into full state (fast)
+        self.obs_idx = np.arange(
+            self.K, self.dim, int(obs_stride)
+        )  # indices into full state (fast)
         self.inflate_sigma_slow = float(inflate_sigma_slow)
         self.inflate_sigma_fast = float(inflate_sigma_fast)
 
@@ -156,7 +158,7 @@ class TwoScaleLorenz96(ForwardModel):
         k2 = self._rhs(s + 0.5 * dt * k1)
         k3 = self._rhs(s + 0.5 * dt * k2)
         k4 = self._rhs(s + dt * k3)
-        return s + dt / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4)
+        return cast(FloatArray, s + dt / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4))
 
     def integrate(self, s: FloatArray, n_steps: int) -> FloatArray:
         """Integrate a single state vector ``n_steps`` RK4 steps (public, for spin-up)."""
@@ -183,7 +185,7 @@ class TwoScaleLorenz96(ForwardModel):
 
     def forecast(self, member_id: int, window: float) -> None:
         """Advance member ``member_id`` by ``window`` and accumulate a window-mean."""
-        n = max(1, int(round(window / self.dt)))
+        n = max(1, round(window / self.dt))
         s = self._state[member_id].copy()
         acc = np.zeros_like(s)
         for _ in range(n):
@@ -195,11 +197,11 @@ class TwoScaleLorenz96(ForwardModel):
 
     def observe(self, member_id: int, window: float) -> FloatArray:
         """Return the window-mean fast variables at the observation stride."""
-        return self._wmean[member_id, self.obs_idx]
+        return cast(FloatArray, self._wmean[member_id, self.obs_idx])
 
     def get_state(self, member_id: int) -> FloatArray:
         """Return an independent copy of the member's full state."""
-        return self._state[member_id].copy()
+        return cast(FloatArray, self._state[member_id].copy())
 
     def set_state(self, member_id: int, state: FloatArray) -> None:
         """Overwrite the member's full state with a parent's snapshot."""
@@ -309,7 +311,7 @@ class CoupledLorenz63(ForwardModel):
         k2 = self._rhs(s + 0.5 * dt * k1)
         k3 = self._rhs(s + 0.5 * dt * k2)
         k4 = self._rhs(s + dt * k3)
-        return s + dt / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4)
+        return cast(FloatArray, s + dt / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4))
 
     def integrate(self, s: FloatArray, n_steps: int) -> FloatArray:
         """Integrate a single state vector ``n_steps`` RK4 steps (public, for spin-up)."""
@@ -336,7 +338,7 @@ class CoupledLorenz63(ForwardModel):
 
     def forecast(self, member_id: int, window: float) -> None:
         """Advance member ``member_id`` by ``window`` and accumulate a window-mean."""
-        n = max(1, int(round(window / self.dt)))
+        n = max(1, round(window / self.dt))
         s = self._state[member_id].copy()
         acc = np.zeros_like(s)
         for _ in range(n):
@@ -348,11 +350,11 @@ class CoupledLorenz63(ForwardModel):
 
     def observe(self, member_id: int, window: float) -> FloatArray:
         """Return the window-mean fast subsystem (the observed variables)."""
-        return self._wmean[member_id, self.OBS_IDX]
+        return cast(FloatArray, self._wmean[member_id, self.OBS_IDX])
 
     def get_state(self, member_id: int) -> FloatArray:
         """Return an independent copy of the member's full state."""
-        return self._state[member_id].copy()
+        return cast(FloatArray, self._state[member_id].copy())
 
     def set_state(self, member_id: int, state: FloatArray) -> None:
         """Overwrite the member's full state with a parent's snapshot."""

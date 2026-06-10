@@ -47,8 +47,14 @@ def main() -> None:
     # validated robust over many seeds (median RMSE reduction ~96%, all positive).
     r = run_fast_slow_osse(
         lambda n: CoupledLorenz63(n, eps=0.1, kappa=6.0, dt=0.01),
-        n_members=100, n_cycles=600, window=0.15, spinup_steps=3000,
-        obs_sigma=0.5, eta=2.0, inflation=0.4, seed=1234,
+        n_members=100,
+        n_cycles=600,
+        window=0.15,
+        spinup_steps=3000,
+        obs_sigma=0.5,
+        eta=2.0,
+        inflation=0.4,
+        seed=1234,
     )
     report("coupled L63", r)
     ef, ed, skill = rmse_skill(r)
@@ -57,14 +63,22 @@ def main() -> None:
     fig, ax = plt.subplots(figsize=(7.4, 3.4), constrained_layout=True)
     lo, hi = np.nanpercentile(r["da_targets"], 5, 1), np.nanpercentile(r["da_targets"], 95, 1)
     ax.fill_between(x, lo, hi, color="#e08214", alpha=0.30, lw=0, label="DA 5--95%")
-    ax.plot(x, r["free_mean"], color="#3b6fb6", ls=(0, (5, 2)), lw=1.5,
-            label=f"FREE  (r={r['r_free']:+.2f})")
+    ax.plot(
+        x,
+        r["free_mean"],
+        color="#3b6fb6",
+        ls=(0, (5, 2)),
+        lw=1.5,
+        label=f"FREE  (r={r['r_free']:+.2f})",
+    )
     ax.plot(x, r["da_mean"], color="#e08214", lw=2.0, label=f"DA  (r={r['r_da']:+.2f})")
     ax.plot(x, r["truth_slow"], color="black", lw=1.8, label="TRUTH")
     ax.set_xlabel("assimilation cycle")
     ax.set_ylabel(r"slow variable  $x_s$")
-    ax.set_title(f"coupled Lorenz-63: observe fast atm. $\\to$ reconstruct slow ocean "
-                 f"(RMSE $-${skill * 100:.0f}%)")
+    ax.set_title(
+        f"coupled Lorenz-63: observe fast atm. $\\to$ reconstruct slow ocean "
+        f"(RMSE $-${skill * 100:.0f}%)"
+    )
     ax.legend(loc="upper right", ncol=2, frameon=False)
     OUT_FIG.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUT_FIG, dpi=140)

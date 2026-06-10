@@ -23,6 +23,7 @@ Design rules carried over from the motivating study:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -120,15 +121,15 @@ class ProxyNetwork:
 
     rows: NDArray[np.intp]
     cols: NDArray[np.intp]
-    lats: NDArray[np.floating]
-    lons: NDArray[np.floating]
-    requested: NDArray[np.floating]
+    lats: NDArray[np.floating[Any]]
+    lons: NDArray[np.floating[Any]]
+    requested: NDArray[np.floating[Any]]
 
     def __len__(self) -> int:
         """Return the number of proxies in the network."""
         return int(self.rows.size)
 
-    def sample(self, surface_field: NDArray[np.floating]) -> NDArray[np.floating]:
+    def sample(self, surface_field: NDArray[np.floating[Any]]) -> NDArray[np.floating[Any]]:
         r"""Apply :math:`h(x)`: extract surface values at the proxy cells.
 
         ``surface_field`` is a 2-D ``(n_lat, n_lon)`` window time-mean surface
@@ -142,10 +143,10 @@ class ProxyNetwork:
 
     def make_pseudo_obs(
         self,
-        truth_surface_field: NDArray[np.floating],
+        truth_surface_field: NDArray[np.floating[Any]],
         sigma: float = 0.3,
         rng: np.random.Generator | None = None,
-    ) -> NDArray[np.floating]:
+    ) -> NDArray[np.floating[Any]]:
         r"""Build pseudo-observations from TRUTH: ``obs = h(x_truth) + sigma * N(0,1)``.
 
         Use a fixed per-cycle seed in the driver so the realization is identical
@@ -162,8 +163,8 @@ class ProxyNetwork:
 
 
 def build_proxy_index(
-    lon: NDArray[np.floating],
-    lat: NDArray[np.floating],
+    lon: NDArray[np.floating[Any]],
+    lat: NDArray[np.floating[Any]],
     wet_mask: NDArray[np.bool_],
     sites: tuple[tuple[float, float], ...] = DEFAULT_MARINE_SST_SITES,
     max_snap_deg: float = 8.0,
