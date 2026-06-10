@@ -36,6 +36,19 @@ The core filter knows nothing about climate models. You bring a forward
 model — a Lorenz-96 toy, a coupled GCM, anything callable — and `pypfda`
 runs the analysis cycle.
 
+## Architecture
+
+`pypfda` is a *model-agnostic engine*. A dynamical core plugs in through one
+small interface — `forecast` · `observe` · `get/set_state` · `inflate` — and the
+same sequential-importance-resampling cycle (cost → weights → ESS check →
+systematic resample → inflate) drives it. The companion OSSE study runs this
+**identical** filter on two structurally independent ocean cores — CM2Mc-BLING
+(MOM5 *z*-level GCM) and CLIMBER-X (GOLDSTEIN frictional-geostrophic EMIC) — and
+recovers AMOC variability from sea-surface-temperature pseudo-observations in
+both, with the same diversity–memory trade-off emerging in each.
+
+![pypfda architecture: pluggable ocean cores attach through one common interface that feeds the SIR engine; each core runs the same TRUTH / FREE / DA observing-system simulation experiment](docs/_static/pypfda_architecture.png)
+
 ## It works on Lorenz-96
 
 ![Lorenz-96 twin experiment: DA vs free ensemble and ESS](docs/_static/lorenz96_demo.png)
