@@ -141,6 +141,34 @@ Reproduce with `python examples/07_l96_nyquist.py`.
 The walk-through with derivations and extra figures lives in the docs
 at [*Paper claims reproduced on Lorenz-96*](https://bijanf.github.io/pypfda/tutorials/02_paper_claims_on_l96.html).
 
+## Coupled fast–slow benchmarks
+
+The package ships two coupled fast–slow systems as first-class
+`ForwardModel`s in `pypfda.models.lorenz`, each driven by the *same*
+`CycleDriver` that the companion paper points at its coupled GCM cores:
+
+- **`TwoScaleLorenz96`** — the two-level Lorenz-96 model (Lorenz 1996;
+  Lorenz & Emanuel 1998): slow large-scale variables `X_k` coupled to a
+  fast small-scale ring `Y_{j,k}`.
+- **`CoupledLorenz63`** — a two-timescale coupled Lorenz-63 (Peña &
+  Kalnay 2004): a fast "atmosphere" two-way coupled to a slow "ocean".
+
+In both, the twin OSSE **observes only the fast variable and
+reconstructs only the slow one** — the minimal, laptop-runnable analogue
+of reconstructing slow ocean overturning (AMOC) from fast surface
+temperature (SST). Each run is checked by
+`pypfda.verify.scan_osse_result` (no clone / stale-diagnostic artifact)
+and records the *forecast* diagnostic, so it cannot silently drift to the
+optimistic analysis convention. On two-scale Lorenz-96 the filter lifts
+the slow-index correlation from ≈ −0.1 (free) to ≈ +0.2 (Δr ≈ +0.3),
+at the honest cost of near-total genealogical collapse — the
+diversity–memory trade-off the inflation kernel exists to manage.
+
+```bash
+python examples/08_two_scale_l96_fast_slow.py
+python examples/09_coupled_l63_fast_slow.py
+```
+
 ## Scope — what `pypfda` is and is not
 
 `pypfda` ships the **data-assimilation method**, not a turnkey coupling
