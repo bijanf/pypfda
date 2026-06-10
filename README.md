@@ -143,6 +143,14 @@ at [*Paper claims reproduced on Lorenz-96*](https://bijanf.github.io/pypfda/tuto
 
 ## Coupled fast–slow benchmarks
 
+![Two-scale Lorenz-96 twin OSSE: observe only the fast ring, reconstruct the slow large-scale index](docs/_static/l96_fast_slow.png)
+
+*Observe only the fast ring, reconstruct the slow large-scale index.* The DA
+ensemble mean (orange, with its 5–95% band) tracks the truth (black) while the
+unassimilated free ensemble (blue, dashed) cannot — a clean, laptop-runnable
+analogue of inferring slow ocean overturning from fast surface fields. Reproduce
+with `python examples/08_two_scale_l96_fast_slow.py`.
+
 The package ships two coupled fast–slow systems as first-class
 `ForwardModel`s in `pypfda.models.lorenz`, each driven by the *same*
 `CycleDriver` that the companion paper points at its coupled GCM cores:
@@ -161,8 +169,13 @@ temperature (SST). Each run is checked by
 and records the *forecast* diagnostic, so it cannot silently drift to the
 optimistic analysis convention. On two-scale Lorenz-96 the filter lifts
 the slow-index correlation from ≈ −0.1 (free) to ≈ +0.2 (Δr ≈ +0.3),
-at the honest cost of near-total genealogical collapse — the
-diversity–memory trade-off the inflation kernel exists to manage.
+at the honest cost of near-total genealogical collapse (effective
+ancestor size → 1) — the diversity–memory trade-off the inflation
+kernel exists to manage. The coupled Lorenz-63 case is the easier mirror
+image: the same operators cut slow-variable RMSE by ≈ 97 % (correlation
++0.52 → +0.83) while the genealogy stays healthy (effective ancestor
+size ≈ 40), spanning both the degenerate and the well-conditioned regime
+without a single change to the filter.
 
 ```bash
 python examples/08_two_scale_l96_fast_slow.py
@@ -283,9 +296,10 @@ Read the docs at <https://bijanf.github.io/pypfda>.
 If you use `pypfda` in published work, please cite the software (via the
 `CITATION.cff` button on GitHub) **and** the methodological paper:
 
-> Fallah, B., et al. (2026). Bidirectional AMOC–SST coupling on fast and
-> slow timescales: Causal discovery and particle filter perspectives for
-> paleoclimate reconstruction. In preparation.
+> Fallah, B., Rostami, M., Huiskamp, W., Goosse, H., & Rahmstorf, S.
+> (2026). Online Particle Filter Data Assimilation for AMOC
+> Reconstruction: A Diversity–Memory Trade-off in Observing System
+> Simulation Experiments. In preparation.
 
 A BibTeX snippet is provided in [CITATION.cff](CITATION.cff).
 

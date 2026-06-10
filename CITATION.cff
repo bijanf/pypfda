@@ -27,5 +27,17 @@ preferred-citation:
     - given-names: Bijan
       family-names: Fallah
       affiliation: Potsdam Institute for Climate Impact Research (PIK)
+    - given-names: Masoud
+      family-names: Rostami
+      affiliation: Potsdam Institute for Climate Impact Research (PIK)
+    - given-names: Willem
+      family-names: Huiskamp
+      affiliation: Potsdam Institute for Climate Impact Research (PIK)
+    - given-names: Hugues
+      family-names: Goosse
+      affiliation: Université catholique de Louvain
+    - given-names: Stefan
+      family-names: Rahmstorf
+      affiliation: Potsdam Institute for Climate Impact Research (PIK)
   year: 2026
   status: in-preparation
