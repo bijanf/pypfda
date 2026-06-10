@@ -15,7 +15,7 @@ Meteorological Society, 125, 723-757.
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -29,7 +29,7 @@ def haversine_distance(
     lon1: ArrayLike,
     lat2: ArrayLike,
     lon2: ArrayLike,
-) -> NDArray[np.floating]:
+) -> NDArray[np.floating[Any]]:
     """Great-circle distance in kilometres between points on the sphere.
 
     Inputs are in degrees and may be scalars or broadcastable arrays.
@@ -52,13 +52,13 @@ def haversine_distance(
 
     a = np.sin(dlat / 2) ** 2 + np.cos(lat1_rad) * np.cos(lat2_rad) * np.sin(dlon / 2) ** 2
     c = 2.0 * np.arcsin(np.sqrt(np.clip(a, 0.0, 1.0)))
-    return cast("NDArray[np.floating]", np.asarray(EARTH_RADIUS_KM * c, dtype=float))
+    return cast("NDArray[np.floating[Any]]", np.asarray(EARTH_RADIUS_KM * c, dtype=float))
 
 
 def gaspari_cohn(
     distance: ArrayLike,
     localization_radius: float,
-) -> NDArray[np.floating]:
+) -> NDArray[np.floating[Any]]:
     r"""Gaspari-Cohn fifth-order piecewise rational localization function.
 
     The function is :math:`1` at zero distance, smoothly decays to
@@ -104,13 +104,13 @@ def gaspari_cohn(
     )
 
     # Region 3: r >= 2 stays at zero.
-    return cast("NDArray[np.floating]", weight)
+    return cast("NDArray[np.floating[Any]]", weight)
 
 
 def pairwise_distance_matrix(
     lats: ArrayLike,
     lons: ArrayLike,
-) -> NDArray[np.floating]:
+) -> NDArray[np.floating[Any]]:
     """Symmetric pairwise great-circle distance matrix.
 
     Parameters

@@ -37,7 +37,7 @@ import subprocess
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -75,7 +75,7 @@ TS_VAR = "ts"  # ts[0]=temperature, ts[1]=salinity in ocn_restart.nc
 # ---------------------------------------------------------------------------
 # Pure NetCDF I/O helpers (testable without the model)
 # ---------------------------------------------------------------------------
-def read_amoc26n(ocn_ts_path: Path) -> NDArray[np.floating]:
+def read_amoc26n(ocn_ts_path: Path) -> NDArray[np.floating[Any]]:
     """Return the ``amoc26N`` (Sv) time series from a CLIMBER-X ``ocn_ts.nc``."""
     import netCDF4
 
@@ -83,7 +83,7 @@ def read_amoc26n(ocn_ts_path: Path) -> NDArray[np.floating]:
         return np.asarray(ds.variables[AMOC_VAR][:], dtype=float).ravel()
 
 
-def read_annual_sst(ocn_nc_path: Path) -> NDArray[np.floating]:
+def read_annual_sst(ocn_nc_path: Path) -> NDArray[np.floating[Any]]:
     """Return the last-record annual-mean SST field, shape ``(n_lat, n_lon)``.
 
     Land cells (CLIMBER-X fill value ``-9999``) are returned as ``NaN``.
@@ -95,7 +95,7 @@ def read_annual_sst(ocn_nc_path: Path) -> NDArray[np.floating]:
     return np.where(np.abs(sst - SST_FILL) < 1.0, np.nan, sst)
 
 
-def read_grid(ocn_nc_path: Path) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
+def read_grid(ocn_nc_path: Path) -> tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]]]:
     """Return ``(lon, lat)`` cell-centre coordinate arrays from ``ocn.nc``."""
     import netCDF4
 
@@ -107,7 +107,7 @@ def read_grid(ocn_nc_path: Path) -> tuple[NDArray[np.floating], NDArray[np.float
 
 def wet_mask(ocn_nc_path: Path) -> NDArray[np.bool_]:
     """Return a ``(n_lat, n_lon)`` ocean mask (``True`` = wet) from the SST fill value."""
-    return ~np.isnan(read_annual_sst(ocn_nc_path))
+    return cast("NDArray[np.bool_]", ~np.isnan(read_annual_sst(ocn_nc_path)))
 
 
 def perturb_ocean_restart(
@@ -349,7 +349,7 @@ class ClimberXAdapter(ForwardModel):
         self._elapsed[member_id] = self._elapsed.get(member_id, 0) + nyears
 
     # -- observation operator --------------------------------------------
-    def observe(self, member_id: int, window: float) -> NDArray[np.floating]:
+    def observe(self, member_id: int, window: float) -> NDArray[np.floating[Any]]:
         """Sample the member's annual-mean SST at the proxy network, shape ``(n_obs,)``."""
         del window  # observation reads the just-integrated window's SST output
         sst = read_annual_sst(self._member_dir(member_id) / "ocn.nc")

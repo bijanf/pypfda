@@ -15,7 +15,7 @@ back in.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Final
+from typing import Any, Final
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -56,8 +56,8 @@ class AssimilationInfo:
         Resampling indices, or ``None`` if no resampling occurred.
     """
 
-    weights: NDArray[np.floating]
-    log_weights: NDArray[np.floating]
+    weights: NDArray[np.floating[Any]]
+    log_weights: NDArray[np.floating[Any]]
     ess: float
     ess_fraction: float
     entropy: float
@@ -120,7 +120,7 @@ class ParticleFilter:
         ensemble_obs: ArrayLike,
         observations: ArrayLike,
         obs_err: ArrayLike | float,
-    ) -> tuple[NDArray[np.floating], AssimilationInfo]:
+    ) -> tuple[NDArray[np.floating[Any]], AssimilationInfo]:
         """Run one analysis (and possibly resampling) step.
 
         Parameters
@@ -150,7 +150,7 @@ class ParticleFilter:
         self,
         ensemble: ArrayLike,
         log_weights: ArrayLike,
-    ) -> tuple[NDArray[np.floating], AssimilationInfo]:
+    ) -> tuple[NDArray[np.floating[Any]], AssimilationInfo]:
         """Like :meth:`assimilate` but takes externally-computed log-weights.
 
         Use this when you have a non-Gaussian likelihood, a custom proxy

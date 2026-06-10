@@ -42,7 +42,7 @@ from pypfda.models.base import ForwardModel
 # returns (y, obs_err) where y has shape (n_obs,) and obs_err is a scalar or
 # an (n_obs,) array of standard deviations. For an OSSE this draws from the
 # synthetic truth; for a real reconstruction it returns the proxy values.
-ObsProvider = Callable[[int], "tuple[NDArray[np.floating], NDArray[np.floating] | float]"]
+ObsProvider = Callable[[int], "tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]] | float]"]
 
 #: Run history: named lists, one entry appended per completed cycle.
 History = dict[str, list[Any]]
@@ -101,7 +101,7 @@ class ThreadPoolBackend(ExecutionBackend):
 # ---------------------------------------------------------------------------
 # Diagnostics
 # ---------------------------------------------------------------------------
-def effective_ancestor_size(genealogy: NDArray[np.integer], n_ancestors: int) -> float:
+def effective_ancestor_size(genealogy: NDArray[np.integer[Any]], n_ancestors: int) -> float:
     r"""Effective number of surviving ancestors.
 
     .. math:: \mathrm{EAS} = 1 \big/ \sum_a f_a^2,
@@ -121,10 +121,10 @@ def effective_ancestor_size(genealogy: NDArray[np.integer], n_ancestors: int) ->
 
 
 def gaussian_loglik_nan(
-    ensemble_obs: NDArray[np.floating],
-    observations: NDArray[np.floating],
-    obs_err: NDArray[np.floating] | float,
-) -> NDArray[np.floating]:
+    ensemble_obs: NDArray[np.floating[Any]],
+    observations: NDArray[np.floating[Any]],
+    obs_err: NDArray[np.floating[Any]] | float,
+) -> NDArray[np.floating[Any]]:
     r"""NaN-aware diagonal-Gaussian log-likelihood per member.
 
     Like :func:`pypfda.weights.gaussian_log_likelihood` but sums only over
@@ -204,7 +204,7 @@ class CycleDriver:
         """Return the JSON checkpoint path, or ``None`` if no ``outdir`` was set."""
         return Path(self.outdir) / "pypfda_driver_state.json" if self.outdir else None
 
-    def _maybe_resume(self, n: int) -> tuple[int, NDArray[np.integer], History]:
+    def _maybe_resume(self, n: int) -> tuple[int, NDArray[np.integer[Any]], History]:
         """Return ``(start_cycle, genealogy, history)``, resuming if a checkpoint exists."""
         path = self._ckpt_path()
         if self.resume and path and path.exists():
@@ -229,7 +229,9 @@ class CycleDriver:
         }
         return 0, genealogy, history
 
-    def _checkpoint(self, cycle: int, genealogy: NDArray[np.integer], history: History) -> None:
+    def _checkpoint(
+        self, cycle: int, genealogy: NDArray[np.integer[Any]], history: History
+    ) -> None:
         """Atomically write the driver state (genealogy + history + cycle) to ``outdir``."""
         path = self._ckpt_path()
         if not path:
@@ -300,8 +302,12 @@ class CycleDriver:
             # (weighted/resampled) ensemble mean can be reconstructed offline from
             # the per-member forecast diagnostics WITHOUT re-running the model.
             history.setdefault("parents", []).append(
-                [int(p) for p in (info.indices if info.resampled and info.indices is not None
-                                  else range(n))]
+                [
+                    int(p)
+                    for p in (
+                        info.indices if info.resampled and info.indices is not None else range(n)
+                    )
+                ]
             )
             self._checkpoint(cycle, genealogy, history)
 

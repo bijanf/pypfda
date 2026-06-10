@@ -89,7 +89,7 @@ class ForwardModel(ABC):
 
     # -- observation operator --------------------------------------------
     @abstractmethod
-    def observe(self, member_id: int, window: float) -> NDArray[np.floating]:
+    def observe(self, member_id: int, window: float) -> NDArray[np.floating[Any]]:
         """Return member ``member_id``'s predicted observations, shape ``(n_obs,)``.
 
         Apply the observation operator :math:`H` at the fixed proxy network

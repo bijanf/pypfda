@@ -17,12 +17,13 @@ ISPA 2005.
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 
-def _check_weights(weights: ArrayLike) -> NDArray[np.floating]:
+def _check_weights(weights: ArrayLike) -> NDArray[np.floating[Any]]:
     """Validate and return weights as a float array."""
     w = np.asarray(weights, dtype=float)
     if w.ndim != 1:

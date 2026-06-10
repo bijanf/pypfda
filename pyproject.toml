@@ -142,6 +142,8 @@ ignore = [
 "examples/**" = ["D", "INP001"]
 "reproduce/**" = ["D", "INP001"]
 "docs/conf.py" = ["D", "INP001", "A001"]
+# K, J, F are the canonical Lorenz-96 parameter symbols (Lorenz 1996); keep them.
+"src/pypfda/models/lorenz.py" = ["N803"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

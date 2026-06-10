@@ -19,17 +19,23 @@ Use :func:`scan_osse_result` as a GATE in every run/extract script before a
 number is allowed to become a paper value, and :func:`assert_forecast_convention`
 as the adapter conformance check every new ForwardModel must pass.
 """
+
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from numpy.typing import ArrayLike
+
+if TYPE_CHECKING:
+    from pypfda.models.base import ForwardModel
 
 
 # --------------------------------------------------------------------------- #
 #  Result gate: scan a finished OSSE (ens vs truth) for corruption signatures   #
 # --------------------------------------------------------------------------- #
-def _r(a, b):
+def _r(a: ArrayLike, b: ArrayLike) -> float:
     a = np.asarray(a, float)
     b = np.asarray(b, float)
     m = np.isfinite(a) & np.isfinite(b)
@@ -38,17 +44,22 @@ def _r(a, b):
     return float(np.corrcoef(a[m], b[m])[0, 1])
 
 
+def _default_truth(c: int) -> float:
+    """Default synthetic truth for the conformance run: a slow sinusoid."""
+    return 3.0 * float(np.sin(2.0 * np.pi * c / 7.0))
+
+
 def scan_osse_result(
-    ens_amoc,
-    truth_amoc,
+    ens_amoc: ArrayLike,
+    truth_amoc: ArrayLike,
     *,
-    eas=None,
-    free_ens=None,
+    eas: ArrayLike | None = None,
+    free_ens: ArrayLike | None = None,
     clone_tol: float = 1e-9,
     clone_max: int = 2,
     nan_max_frac: float = 0.25,
     label: str = "",
-) -> dict:
+) -> dict[str, Any]:
     """Scan one OSSE arm for corruption/pathology. Returns metrics + verdict.
 
     ``ok=False`` (a hard failure that must block the number from a paper) is
@@ -71,14 +82,14 @@ def scan_osse_result(
     clones = {}
     for k in (-1, 0, 1):
         if n - abs(k) >= 3:
-            a = ens[max(0, k):n + min(0, k)]
-            b = tru[max(0, -k):n + min(0, -k)]
+            a = ens[max(0, k) : n + min(0, k)]
+            b = tru[max(0, -k) : n + min(0, -k)]
             clones[k] = int(np.sum(np.isclose(a, b, rtol=0.0, atol=clone_tol)))
         else:
             clones[k] = 0
     max_clone = max(clones.values())
     if max_clone > clone_max:
-        kbad = max(clones, key=clones.get)
+        kbad = max(clones, key=lambda k: clones[k])
         pathologies.append(
             f"clone_artifact: ens==truth(shift {kbad:+d}) exactly in {max_clone}/{n} "
             f"cycles -> recorded diagnostic is a stale/cross-contaminated copy of truth"
@@ -97,30 +108,43 @@ def scan_osse_result(
             fr0 = _r(fe, tru)
             frp1 = _r(fe[1:], tru[:-1]) if n > 3 else float("nan")
             free_asym = (frp1 - fr0) if (np.isfinite(frp1) and np.isfinite(fr0)) else float("nan")
-            sym = (f"; FREE asymmetry {free_asym:+.2f} "
-                   f"({'symmetric -> DA lag is resampling-induced' if abs(free_asym) < 0.2 else 'also asymmetric'})")
+            sym = (
+                f"; FREE asymmetry {free_asym:+.2f} "
+                f"({'symmetric -> DA lag is resampling-induced' if abs(free_asym) < 0.2 else 'also asymmetric'})"
+            )
         caveats.append(
             f"forecast_lag: r(lag+1)={rp1:+.2f} >> r(L0)={r0:+.2f} -> the DA estimate "
             f"tracks truth best one window back (ocean memory){sym}. Score at L0 (conservative)."
         )
 
     # --- genealogical collapse (caveat, the diversity-memory trade-off)
-    eas_info = {}
-    if eas is not None and len(eas):
-        eas = np.asarray(eas, float)
-        eas_info = {"eas_first": float(eas[0]), "eas_min": float(np.min(eas)),
-                    "frac_collapsed": float(np.mean(eas <= 1.5))}
-        if eas_info["frac_collapsed"] > 0.25:
-            caveats.append(
-                f"genealogy_collapse: EAS<=1.5 in {eas_info['frac_collapsed']:.0%} of cycles "
-                f"(min {eas_info['eas_min']:.1f}) -> report the degeneracy caveat (perfect-model upper bound)"
-            )
+    eas_info: dict[str, float] = {}
+    if eas is not None:
+        eas_arr = np.asarray(eas, float)
+        if eas_arr.size:
+            eas_info = {
+                "eas_first": float(eas_arr[0]),
+                "eas_min": float(np.min(eas_arr)),
+                "frac_collapsed": float(np.mean(eas_arr <= 1.5)),
+            }
+            if eas_info["frac_collapsed"] > 0.25:
+                caveats.append(
+                    f"genealogy_collapse: EAS<=1.5 in {eas_info['frac_collapsed']:.0%} of cycles "
+                    f"(min {eas_info['eas_min']:.1f}) -> report the degeneracy caveat (perfect-model upper bound)"
+                )
 
     return {
-        "label": label, "n": n, "ok": len(pathologies) == 0,
-        "r_lag0": r0, "r_lagp1": rp1, "r_lagm1": rm1,
-        "clones": clones, "nan_frac": nan_frac, "eas": eas_info,
-        "pathologies": pathologies, "caveats": caveats,
+        "label": label,
+        "n": n,
+        "ok": len(pathologies) == 0,
+        "r_lag0": r0,
+        "r_lagp1": rp1,
+        "r_lagm1": rm1,
+        "clones": clones,
+        "nan_frac": nan_frac,
+        "eas": eas_info,
+        "pathologies": pathologies,
+        "caveats": caveats,
     }
 
 
@@ -128,12 +152,12 @@ def scan_osse_result(
 #  Adapter conformance: pin the FORECAST convention + no-stale/no-clone         #
 # --------------------------------------------------------------------------- #
 def assert_forecast_convention(
-    make_model: Callable[[], object],
+    make_model: Callable[[], ForwardModel],
     n_members: int = 8,
     n_cycles: int = 12,
     truth_fn: Callable[[int], float] | None = None,
     obs_err: float = 0.5,
-) -> dict:
+) -> dict[str, Any]:
     """Run a model through the driver and assert it records the FORECAST mean.
 
     ``make_model()`` must return a fresh ForwardModel whose ``get_state``/
@@ -147,16 +171,21 @@ def assert_forecast_convention(
     from pypfda.driver import CycleDriver, SerialBackend
 
     if truth_fn is None:
-        truth_fn = lambda c: 3.0 * np.sin(2.0 * np.pi * c / 7.0)
+        truth_fn = _default_truth
 
     model = make_model()
-    pf = ParticleFilter(ess_threshold=1.0, resampling="systematic",
-                        max_weight=0.5, rng=np.random.default_rng(2))
+    pf = ParticleFilter(
+        ess_threshold=1.0, resampling="systematic", max_weight=0.5, rng=np.random.default_rng(2)
+    )
     hist = CycleDriver(
-        model=model, pf=pf,
+        model=model,
+        pf=pf,
         observations=lambda c: (np.array([truth_fn(c)]), obs_err),
-        n_cycles=n_cycles, window=1.0, inflation_amplitude=0.0,
-        backend=SerialBackend(), base_seed=1,
+        n_cycles=n_cycles,
+        window=1.0,
+        inflation_amplitude=0.0,
+        backend=SerialBackend(),
+        base_seed=1,
     ).run()
 
     ens = np.array([np.mean(t) for t in hist["targets"]])

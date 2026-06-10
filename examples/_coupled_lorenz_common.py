@@ -34,9 +34,16 @@ def _corr(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.corrcoef(a[m], b[m])[0, 1])
 
 
-def _drive(model: Any, obs_provider: Callable[[int], Any], *,
-           n_cycles: int, window: float, resample: bool,
-           inflation: float, seed: int) -> tuple[np.ndarray, dict]:
+def _drive(
+    model: Any,
+    obs_provider: Callable[[int], Any],
+    *,
+    n_cycles: int,
+    window: float,
+    resample: bool,
+    inflation: float,
+    seed: int,
+) -> tuple[np.ndarray, dict]:
     """Run one ensemble: FREE (no resampling/inflation) or DA (full filter)."""
     pf = ParticleFilter(
         ess_threshold=0.5 if resample else 1e-9,
@@ -58,10 +65,18 @@ def _drive(model: Any, obs_provider: Callable[[int], Any], *,
     return np.asarray(hist["targets"], dtype=float), hist
 
 
-def run_fast_slow_osse(make_model: Callable[[int], Any], *, n_members: int,
-                       n_cycles: int, window: float, spinup_steps: int,
-                       obs_sigma: float, eta: float, inflation: float,
-                       seed: int = 20260609) -> dict:
+def run_fast_slow_osse(
+    make_model: Callable[[int], Any],
+    *,
+    n_members: int,
+    n_cycles: int,
+    window: float,
+    spinup_steps: int,
+    obs_sigma: float,
+    eta: float,
+    inflation: float,
+    seed: int = 20260609,
+) -> dict:
     """Generic observe-fast / reconstruct-slow twin OSSE.
 
     ``make_model(n)`` builds a fresh adapter for ``n`` members. Returns a results
@@ -90,17 +105,32 @@ def run_fast_slow_osse(make_model: Callable[[int], Any], *, n_members: int,
 
     # Diverse initial ensemble, SHARED by FREE and DA (only DA assimilates).
     spin = make_model(1)
-    ics = [spin.spin_up(np.random.default_rng(seed + 1000 + m), spinup_steps)
-           for m in range(n_members)]
+    ics = [
+        spin.spin_up(np.random.default_rng(seed + 1000 + m), spinup_steps) for m in range(n_members)
+    ]
     free_model, da_model = make_model(n_members), make_model(n_members)
     for m in range(n_members):
         free_model.initialize_member(m, ics[m])
         da_model.initialize_member(m, ics[m])
 
-    free_t, _ = _drive(free_model, obs_provider, n_cycles=n_cycles, window=window,
-                       resample=False, inflation=inflation, seed=seed + 7)
-    da_t, da_h = _drive(da_model, obs_provider, n_cycles=n_cycles, window=window,
-                        resample=True, inflation=inflation, seed=seed + 7)
+    free_t, _ = _drive(
+        free_model,
+        obs_provider,
+        n_cycles=n_cycles,
+        window=window,
+        resample=False,
+        inflation=inflation,
+        seed=seed + 7,
+    )
+    da_t, da_h = _drive(
+        da_model,
+        obs_provider,
+        n_cycles=n_cycles,
+        window=window,
+        resample=True,
+        inflation=inflation,
+        seed=seed + 7,
+    )
 
     free_mean, da_mean = np.nanmean(free_t, axis=1), np.nanmean(da_t, axis=1)
     eas = np.asarray(da_h["eas"], float)
@@ -111,10 +141,14 @@ def run_fast_slow_osse(make_model: Callable[[int], Any], *, n_members: int,
         "gate": gate,
         "cycle": np.arange(1, n_cycles + 1),
         "truth_slow": truth_slow,
-        "free_targets": free_t, "da_targets": da_t,
-        "free_mean": free_mean, "da_mean": da_mean,
-        "ess_da": np.asarray(da_h["ess"], float), "eas_da": eas,
-        "r_free": _corr(free_mean, truth_slow), "r_da": _corr(da_mean, truth_slow),
+        "free_targets": free_t,
+        "da_targets": da_t,
+        "free_mean": free_mean,
+        "da_mean": da_mean,
+        "ess_da": np.asarray(da_h["ess"], float),
+        "eas_da": eas,
+        "r_free": _corr(free_mean, truth_slow),
+        "r_da": _corr(da_mean, truth_slow),
     }
 
 

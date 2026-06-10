@@ -9,6 +9,7 @@ stale-diagnostic bug and the forecast/analysis confusion. These tests pin the
 intended behaviour with a model that reproduces that split, plus direct tests of
 the production result gate ``pypfda.verify.scan_osse_result``.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -34,7 +35,7 @@ class SplitStateTwin(ForwardModel):
         self.diag[i] = float(ic)
 
     def forecast(self, i, window):
-        self.state[i] += self.rng.normal(0.0, self.q * window ** 0.5)
+        self.state[i] += self.rng.normal(0.0, self.q * window**0.5)
         self.diag[i] = self.state[i]  # diagnostic == THIS window's forecast
 
     def observe(self, i, window):
@@ -94,7 +95,7 @@ def test_gate_passes_clean_nonclone_run():
 def test_gate_flags_nan_flood():
     truth = np.linspace(10, 20, 20)
     ens = truth.copy()
-    ens[: 10] = np.nan  # half missing
+    ens[:10] = np.nan  # half missing
     scan = scan_osse_result(ens, truth, label="nan")
     assert not scan["ok"]
     assert any("nan" in p for p in scan["pathologies"])

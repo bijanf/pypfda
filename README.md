@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/_static/pypfda.svg" alt="pypfda — particle filter data assimilation" width="360">
+</p>
+
 # pypfda
 
 **Particle filter data assimilation in pure Python**, with first-class

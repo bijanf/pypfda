@@ -51,7 +51,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -117,9 +117,18 @@ class PlasimConfig:
     #: Files in ``template_dir`` never provisioned into a member (outputs,
     #: per-member restart components, the executable itself, archived segments).
     _exclude_prefixes: tuple[str, ...] = (
-        "MOST", "Abort_Message", "plasim_output", "plasim_status",
-        "ocean_output", "ice_output", "lsg_output", "plasim_diag",
-        "LSG_srf", "LSG_out", "plasim.x", "most_plasim",
+        "MOST",
+        "Abort_Message",
+        "plasim_output",
+        "plasim_status",
+        "ocean_output",
+        "ice_output",
+        "lsg_output",
+        "plasim_diag",
+        "LSG_srf",
+        "LSG_out",
+        "plasim.x",
+        "most_plasim",
     )
 
 
@@ -250,7 +259,7 @@ class PlasimAdapter(ForwardModel):
         self._elapsed[member_id] = self._elapsed.get(member_id, 0) + nyears
 
     # -- observation operator --------------------------------------------
-    def observe(self, member_id: int, window: float) -> NDArray[np.floating]:
+    def observe(self, member_id: int, window: float) -> NDArray[np.floating[Any]]:
         """Sample the member's just-written surface SST at the proxy network.
 
         Returns a length-``n_obs`` vector aligned with the proxy network's site
@@ -261,7 +270,7 @@ class PlasimAdapter(ForwardModel):
         return self.cfg.proxy.sample(sst)
 
     # -- state I/O for resampling ----------------------------------------
-    def get_state(self, member_id: int):
+    def get_state(self, member_id: int) -> Path:
         """Snapshot the member's current restart set to an independent directory."""
         snap = self.snaps_root / f"snap_{self._snap_counter:06d}"
         self._snap_counter += 1
@@ -278,7 +287,7 @@ class PlasimAdapter(ForwardModel):
                 shutil.copy(src, snap / f)
         return snap
 
-    def set_state(self, member_id: int, state) -> None:
+    def set_state(self, member_id: int, state: Path) -> None:
         """Overwrite the member's restart set with a parent snapshot (as a unit)."""
         mdir = self._member_dir(member_id)
         for f in RESTART_FILES:  # restart set only (forecast convention; see get_state)
