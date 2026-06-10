@@ -7,8 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-06-10
+
+First tagged release, accompanying the methodological paper (Fallah et al.,
+*Online Particle Filter Data Assimilation for AMOC Reconstruction*).
+
 ### Added
 
+- Coupled fast--slow reference adapters in `pypfda.models.lorenz`:
+  `TwoScaleLorenz96` (two-level Lorenz-96; Lorenz 1996, Lorenz & Emanuel
+  1998) and `CoupledLorenz63` (two-timescale coupled Lorenz-63; Peña &
+  Kalnay 2004). Both are first-class `ForwardModel`s driven by the *same*
+  `CycleDriver` as the coupled-GCM cores: observe the FAST variable,
+  reconstruct the SLOW one — the minimal, laptop-runnable analogue of
+  reconstructing AMOC from SST. They record the *forecast* diagnostic
+  (deliberately not swapped by `set_state`), so they pass the
+  forecast-convention conformance check in `pypfda.verify`.
+- Worked twin-OSSE examples `08_two_scale_l96_fast_slow.py` and
+  `09_coupled_l63_fast_slow.py` (TRUTH/FREE/DA), each gated by
+  `pypfda.verify.scan_osse_result`, sharing a `_coupled_lorenz_common.py`
+  driver.
 - Initial public release skeleton:
   - `ParticleFilter` core class with sequential importance resampling.
   - Numerically stable weight computation via log-sum-exp.
@@ -40,4 +58,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     3.10–3.12.
   - PyPI trusted publishing on tagged releases.
 
-[Unreleased]: https://github.com/bijanf/pypfda/compare/main...HEAD
+[Unreleased]: https://github.com/bijanf/pypfda/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/bijanf/pypfda/releases/tag/v1.0.0

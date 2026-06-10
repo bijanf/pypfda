@@ -154,6 +154,47 @@ Reproduce with `python examples/07_l96_nyquist.py`.
 The walk-through with derivations and extra figures lives in the docs
 at [*Paper claims reproduced on Lorenz-96*](https://bijanf.github.io/pypfda/tutorials/02_paper_claims_on_l96.html).
 
+## Coupled fast–slow benchmarks
+
+![Two-scale Lorenz-96 twin OSSE: observe only the fast ring, reconstruct the slow large-scale index](docs/_static/l96_fast_slow.png)
+
+*Observe only the fast ring, reconstruct the slow large-scale index.* The DA
+ensemble mean (orange, with its 5–95% band) tracks the truth (black) while the
+unassimilated free ensemble (blue, dashed) cannot — a clean, laptop-runnable
+analogue of inferring slow ocean overturning from fast surface fields. Reproduce
+with `python examples/08_two_scale_l96_fast_slow.py`.
+
+The package ships two coupled fast–slow systems as first-class
+`ForwardModel`s in `pypfda.models.lorenz`, each driven by the *same*
+`CycleDriver` that the companion paper points at its coupled GCM cores:
+
+- **`TwoScaleLorenz96`** — the two-level Lorenz-96 model (Lorenz 1996;
+  Lorenz & Emanuel 1998): slow large-scale variables `X_k` coupled to a
+  fast small-scale ring `Y_{j,k}`.
+- **`CoupledLorenz63`** — a two-timescale coupled Lorenz-63 (Peña &
+  Kalnay 2004): a fast "atmosphere" two-way coupled to a slow "ocean".
+
+In both, the twin OSSE **observes only the fast variable and
+reconstructs only the slow one** — the minimal, laptop-runnable analogue
+of reconstructing slow ocean overturning (AMOC) from fast surface
+temperature (SST). Each run is checked by
+`pypfda.verify.scan_osse_result` (no clone / stale-diagnostic artifact)
+and records the *forecast* diagnostic, so it cannot silently drift to the
+optimistic analysis convention. On two-scale Lorenz-96 the filter lifts
+the slow-index correlation from ≈ −0.1 (free) to ≈ +0.2 (Δr ≈ +0.3),
+at the honest cost of near-total genealogical collapse (effective
+ancestor size → 1) — the diversity–memory trade-off the inflation
+kernel exists to manage. The coupled Lorenz-63 case is the easier mirror
+image: the same operators cut slow-variable RMSE by ≈ 97 % (correlation
++0.52 → +0.83) while the genealogy stays healthy (effective ancestor
+size ≈ 40), spanning both the degenerate and the well-conditioned regime
+without a single change to the filter.
+
+```bash
+python examples/08_two_scale_l96_fast_slow.py
+python examples/09_coupled_l63_fast_slow.py
+```
+
 ## Scope — what `pypfda` is and is not
 
 `pypfda` ships the **data-assimilation method**, not a turnkey coupling
@@ -268,8 +309,9 @@ Read the docs at <https://bijanf.github.io/pypfda>.
 If you use `pypfda` in published work, please cite the software (via the
 `CITATION.cff` button on GitHub) **and** the methodological paper:
 
-> Fallah, B., et al. (2026). Online Particle Filter Data Assimilation for
-> AMOC Reconstruction: A Diversity–Memory Trade-off in Observing System
+> Fallah, B., Rostami, M., Huiskamp, W., Goosse, H., & Rahmstorf, S.
+> (2026). Online Particle Filter Data Assimilation for AMOC
+> Reconstruction: A Diversity–Memory Trade-off in Observing System
 > Simulation Experiments. In preparation.
 
 A BibTeX snippet is provided in [CITATION.cff](CITATION.cff).
