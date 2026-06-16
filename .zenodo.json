@@ -1,0 +1,26 @@
+{
+  "title": "pypfda: an online particle-filter data assimilation engine in pure Python",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "MIT",
+  "version": "1.0.0",
+  "description": "<p><strong>pypfda</strong> is an open-source, model-agnostic <em>online</em> sequential-importance-resampling (SIR) particle-filter data assimilation engine. It couples to coupled Earth system models and idealized dynamical cores through a small common interface (<code>forecast</code>, <code>observe</code>, <code>get/set_state</code>, <code>inflate</code>) and implements the full assimilation cycle (cost, importance weights, tempering, maximum-weight cap, effective-sample-size diagnostics, systematic resampling, and an inflation kernel) with no offline calibration, surrogates, or lookup tables. This release (v1.0) accompanies the manuscript &quot;Online Particle Filter Data Assimilation for AMOC Reconstruction: A Diversity-Memory Trade-off in Observing System Simulation Experiments&quot; (Fallah et al.), submitted to <em>Geoscientific Model Development</em>. It ships runnable fast-slow Lorenz benchmarks and is used to drive perfect-model OSSEs in the CM2Mc-BLING and CLIMBER-X ocean cores.</p>",
+  "creators": [
+    {"name": "Fallah, Bijan", "affiliation": "Potsdam Institute for Climate Impact Research (PIK)"},
+    {"name": "Rostami, Masoud", "affiliation": "Potsdam Institute for Climate Impact Research (PIK)"},
+    {"name": "Huiskamp, Willem", "affiliation": "Potsdam Institute for Climate Impact Research (PIK)"},
+    {"name": "Goosse, Hugues", "affiliation": "Universite catholique de Louvain"},
+    {"name": "Rahmstorf, Stefan", "affiliation": "Potsdam Institute for Climate Impact Research (PIK)"}
+  ],
+  "keywords": [
+    "data assimilation",
+    "particle filter",
+    "sequential Monte Carlo",
+    "paleoclimate",
+    "AMOC",
+    "Earth system model",
+    "OSSE",
+    "Python"
+  ],
+  "language": "eng"
+}
