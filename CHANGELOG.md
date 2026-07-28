@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-28
+
+Adds transient-forcing support to the CLIMBER-X adapter and two idealized Lorenz-63
+examples. No change to the assimilation core, so results produced with 1.0.0 are
+reproduced exactly by this release.
+
+### Added
+
+- `ClimberXConfig.year_ini_start`: the model calendar year the first segment starts
+  at. `forecast()` now advances `year_ini = year_ini_start + elapsed` each cycle, so
+  the calendar runs continuously across segments and prescribed solar/volcanic/CO2
+  forcing tracks real years. Set it to e.g. `-1000` for a last-millennium forced
+  run; the default `0` keeps the constant-forcing behaviour used in the paper.
+- `ClimberXConfig.archive_sst`: when true, `observe()` writes each member's
+  window-mean SST field to `<member>/sst_archive/cycle_NNN.npy`, for validating a
+  reconstructed SST field against observations. Off by default.
+- `examples/11_classic_l63_partial_obs.py`: the classic Lorenz-63 twin experiment
+  under partial observation, the cleanest laptop-scale demonstration that the filter
+  recovers an unobserved component.
+- `examples/10_coupled_l63_clearly_works.py`: a coupled fast--slow Lorenz-63 twin
+  OSSE in a well-posed regime, with its diagnostic figures under `docs/_static/`.
+- `tests/test_climberx_hosing.py`: regression tests pinning the hosing forcing file
+  to the segment's calendar (see Fixed).
+
+### Fixed
+
+- The stochastic-hosing forcing file is now written on the segment's own calendar.
+  `write_hosing_file()` gained a `year0` argument and its time axis runs
+  `year0 .. year0+years-1` instead of always starting at 0. With an advancing
+  `year_ini` a 0-based axis leaves every segment after the first entirely outside
+  the file, so the model would not find its forcing. Only affects runs with
+  `hosing_sigma > 0`; `year0` defaults to 0, so the 1.0.0 behaviour is unchanged.
+
+### Changed
+
+- CLIMBER-X restarts are resolved by absolute end year (`year_ini + nyears`) rather
+  than by `nyears`, matching how the model names them once the calendar advances.
+- `OMP_STACKSIZE` for the CLIMBER-X subprocess raised from 256M to 512M.
+- README: expanded usage documentation.
+
 ## [1.0.0] - 2026-06-10
 
 First tagged release, accompanying the methodological paper (Fallah et al.,

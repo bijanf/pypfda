@@ -192,11 +192,43 @@ kernel exists to manage. The coupled Lorenz-63 case is the easier mirror
 image: the same operators cut slow-variable RMSE by ≈ 97 % (correlation
 +0.52 → +0.83) while the genealogy stays healthy (effective ancestor
 size ≈ 40), spanning both the degenerate and the well-conditioned regime
-without a single change to the filter.
+without a single change to the filter. Example 10 pins down a *clearly
+working* regime as a reusable positive benchmark: with a **chaotic** slow
+subsystem whose unobserved variable genuinely oscillates and switches
+attractor lobes throughout the run (standard deviation ≈ 8, not a frozen
+fixed point), strong coupling, and a generously tempered likelihood that
+keeps the genealogy alive, the filter pulls the diverse free ensemble off
+the wrong attractor lobe and *tracks the time-varying* slow variable —
+flipping its correlation from ≈ −0.5 (free) to ≈ +0.7 (Δr ≈ +1.2; median
+r_DA ≈ +0.68, with r ≥ 0.5 on every representative seed and r ≥ 0.6 on
+≈ 90 % of them) and cutting the **anomaly** RMSE
+(level-removed, so this is variability tracking, not a constant offset)
+from ≈ 8.3 to ≈ 6.1, while the effective sample size stays ≈ 0.85 N and the
+effective ancestor size stays ≈ 0.46 N and varies cycle to cycle — a
+genuine, non-degenerate constraint from the observations rather than a
+single particle memorising the truth.
+
+Example 11 is the **textbook positive control**: a single canonical
+Lorenz-63 attractor (σ = 10, ρ = 28, β = 8/3), observing **only `x`**
+(with noise) and reconstructing the **unobserved `z`**. With just three
+state dimensions and a few hundred particles there is no curse of
+dimensionality, so the same SIR filter reconstructs the hidden dimension
+almost perfectly: the DA ensemble-mean tracks the truth's chaotic `z`
+oscillation while the diverse free ensemble collapses to the attractor
+centroid (correlation +0.15 → **+0.93**, Δr ≈ +0.77; **anomaly** RMSE
+cut by ≈ 52 %, 8.6 → 4.1), and it does so on **every** seed (7/7 with
+r ≥ 0.92). The genealogy stays healthy and *exercised* — effective
+sample size ≈ 0.66 N and effective ancestor size varying cycle to cycle
+(median ≈ 15, minimum ≈ 6, never collapsing to a single lineage) — so the
+gain is an observational constraint, not one particle memorising the truth.
+
+![Classic Lorenz-63: reconstruct the unobserved z from x-only observations](docs/_static/l63_classic_timeseries.png)
 
 ```bash
 python examples/08_two_scale_l96_fast_slow.py
 python examples/09_coupled_l63_fast_slow.py
+python examples/10_coupled_l63_clearly_works.py
+python examples/11_classic_l63_partial_obs.py
 ```
 
 ## Scope — what `pypfda` is and is not

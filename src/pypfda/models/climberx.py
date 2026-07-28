@@ -146,12 +146,20 @@ def perturb_ocean_restart(
         ts[:] = arr
 
 
-def write_hosing_file(path: Path, years: int, sigma: float, tau: float, seed: int) -> None:
+def write_hosing_file(
+    path: Path, years: int, sigma: float, tau: float, seed: int, year0: int = 0
+) -> None:
     """Write a zero-mean AR(1) red-noise freshwater-hosing series (``time``, ``fwf`` in Sv).
 
     CLIMBER-X reads this when ``l_hosing=T, i_hosing=1``. ``sigma`` is the std (Sv),
     ``tau`` the decorrelation time (yr). Zero-mean avoids a net freshwater trend.
     A distinct ``seed`` per (member, cycle) gives every trajectory independent forcing.
+
+    ``year0`` is the model calendar year the segment STARTS at, i.e. the ``year_ini``
+    written into ``control.nml``. The time axis must cover the years the model will
+    actually integrate: with a non-zero ``year_ini`` a 0-based axis leaves the whole
+    segment outside the file, so the forcing is not found. Defaults to 0, which
+    reproduces the constant-forcing behaviour exactly.
     """
     import netCDF4
 
@@ -167,7 +175,7 @@ def write_hosing_file(path: Path, years: int, sigma: float, tau: float, seed: in
         ds.createDimension("time", years)
         t = ds.createVariable("time", "f8", ("time",))
         v = ds.createVariable("fwf", "f8", ("time",))
-        t[:] = np.arange(years, dtype=float)
+        t[:] = float(year0) + np.arange(years, dtype=float)
         t.units = "years"
         v[:] = x
         v.units = "Sv"
@@ -218,6 +226,19 @@ class ClimberXConfig:
     hosing_sigma: float = 0.0
     hosing_tau: float = 10.0  # red-noise decorrelation, yr
     hosing_seed_base: int = 9000
+    #: Start calendar year (relative to 2000 AD) of the FIRST segment. forecast()
+    #: then advances year_ini = year_ini_start + elapsed each cycle, so the model
+    #: calendar runs continuously across segments; for a forced last-2k
+    #: reconstruction set this to e.g. -1000 (1000 CE) and prescribed
+    #: solar/volcanic/CO2 track the real calendar. The default 0 starts the
+    #: calendar at 2000 AD, which under constant forcing is the OSSE behaviour
+    #: (the physics is calendar-independent; only restart labels and the hosing
+    #: time axis follow year_ini).
+    year_ini_start: int = 0
+    #: If True, observe() saves each member's window-mean SST field to
+    #: <member>/sst_archive/cycle_NNN.npy (for reconstructed-SST validation vs
+    #: instrumental ERSST). Cheap: (nlat*nlon) floats per member per cycle.
+    archive_sst: bool = False
 
 
 class ClimberXAdapter(ForwardModel):
@@ -308,24 +329,36 @@ class ClimberXAdapter(ForwardModel):
         """Advance member ``member_id`` by ``window`` years via one ``climber.x`` run."""
         mdir = self._member_dir(member_id)
         nyears = round(window)
-        # Independent red-noise hosing for THIS member and THIS cycle. The model
-        # restarts at year_ini=0 each segment, so it reads years 0..nyears of a
-        # freshly-written file; a distinct (member, cycle) seed keeps every
-        # trajectory's forcing independent yet identical between FREE and DA.
+        # Calendar year at the START of this segment (relative to 2000 AD). For a
+        # constant-forcing OSSE year_ini_start=0 so this stays 0 every cycle; for a
+        # forced transient run it advances by the years already integrated so the
+        # prescribed solar/volcanic/CO2 forcing tracks the real calendar.
+        year_ini = self.cfg.year_ini_start + self._elapsed.get(member_id, 0)
+        # Independent red-noise hosing for THIS member and THIS cycle. The file is
+        # written on the segment's own calendar (year_ini..year_ini+nyears), so it
+        # covers the years the model integrates whether or not the calendar
+        # advances; a distinct (member, cycle) seed keeps every trajectory's
+        # forcing independent yet identical between FREE and DA.
         if self.cfg.hosing_sigma > 0:
             cycle = self._elapsed[member_id] // max(1, nyears)
             seed = self.cfg.hosing_seed_base + member_id * 1000 + cycle
             write_hosing_file(
-                mdir / "hosing.nc", nyears + 2, self.cfg.hosing_sigma, self.cfg.hosing_tau, seed
+                mdir / "hosing.nc",
+                nyears + 2,
+                self.cfg.hosing_sigma,
+                self.cfg.hosing_tau,
+                seed,
+                year0=year_ini,
             )
         self._set_nml(
             mdir / "control.nml",
+            year_ini=str(year_ini),
             nyears=str(nyears),
             nyout_ocn="1",
             restart_in_dir='"state"',
             lnd_restart=(".true." if self.cfg.lnd_restart else ".false."),
         )
-        env = {"OMP_NUM_THREADS": str(self.cfg.omp_threads), "OMP_STACKSIZE": "256M"}
+        env = {"OMP_NUM_THREADS": str(self.cfg.omp_threads), "OMP_STACKSIZE": "512M"}
         import os
 
         run_env = {**os.environ, **env}
@@ -338,8 +371,11 @@ class ClimberXAdapter(ForwardModel):
                 env=run_env,
                 check=True,
             )
-        # promote the end-of-run restart to the member's current state
-        new_restart = mdir / "restart_out" / f"year_{nyears}"
+        # promote the end-of-run restart to the member's current state. CLIMBER-X
+        # names the end restart by ABSOLUTE model year (year_ini + nyears), which
+        # equals nyears only when year_ini==0 (the constant-forcing case).
+        end_year = year_ini + nyears
+        new_restart = mdir / "restart_out" / f"year_{end_year}"
         if not new_restart.is_dir():
             raise RuntimeError(f"member {member_id}: missing {new_restart} after forecast")
         for f in RESTART_FILES:
@@ -351,8 +387,13 @@ class ClimberXAdapter(ForwardModel):
     # -- observation operator --------------------------------------------
     def observe(self, member_id: int, window: float) -> NDArray[np.floating[Any]]:
         """Sample the member's annual-mean SST at the proxy network, shape ``(n_obs,)``."""
-        del window  # observation reads the just-integrated window's SST output
         sst = read_annual_sst(self._member_dir(member_id) / "ocn.nc")
+        if self.cfg.archive_sst:
+            w = max(1, round(window))
+            c = self._elapsed.get(member_id, 0) // w - 1   # _elapsed already incremented by forecast()
+            adir = self._member_dir(member_id) / "sst_archive"
+            adir.mkdir(exist_ok=True)
+            np.save(adir / f"cycle_{max(c, 0):03d}.npy", sst)
         return self.cfg.proxy.sample(sst)
 
     # -- state I/O for resampling ----------------------------------------
