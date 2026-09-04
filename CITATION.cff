@@ -2,14 +2,13 @@ cff-version: 1.2.0
 title: "pypfda: Particle filter data assimilation in pure Python"
 message: "If you use this software, please cite both the software and the methodological paper below."
 type: software
-version: 1.0.0
-date-released: "2026-06-10"
+version: 1.1.0
+date-released: "2026-07-28"
 authors:
   - given-names: Bijan
     family-names: Fallah
     email: bijan.fallah@gmail.com
     affiliation: Potsdam Institute for Climate Impact Research (PIK)
-    orcid: "https://orcid.org/0000-0000-0000-0000"
 repository-code: "https://github.com/bijanf/pypfda"
 url: "https://bijanf.github.io/pypfda"
 license: MIT
@@ -22,22 +21,17 @@ keywords:
   - climate
 preferred-citation:
   type: article
-  title: "Online Particle Filter Data Assimilation for AMOC Reconstruction: A Diversity–Memory Trade-off in Observing System Simulation Experiments"
+  title: "pypfda v1.0: An open-source, model-agnostic particle-filter engine for online sequential paleo data assimilation in Earth system models"
   authors:
     - given-names: Bijan
       family-names: Fallah
-      affiliation: Potsdam Institute for Climate Impact Research (PIK)
-    - given-names: Masoud
-      family-names: Rostami
-      affiliation: Potsdam Institute for Climate Impact Research (PIK)
+      affiliation: "Potsdam Institute for Climate Impact Research (PIK), Member of the Leibniz Association, Potsdam, Germany"
     - given-names: Willem
       family-names: Huiskamp
-      affiliation: Potsdam Institute for Climate Impact Research (PIK)
+      affiliation: "Potsdam Institute for Climate Impact Research (PIK), Member of the Leibniz Association, Potsdam, Germany"
     - given-names: Hugues
       family-names: Goosse
-      affiliation: Université catholique de Louvain
-    - given-names: Stefan
-      family-names: Rahmstorf
-      affiliation: Potsdam Institute for Climate Impact Research (PIK)
+      affiliation: "Université catholique de Louvain, Earth and Life Institute, Louvain-la-Neuve, Belgium"
+  journal: "Geoscientific Model Development"
   year: 2026
   status: in-preparation
