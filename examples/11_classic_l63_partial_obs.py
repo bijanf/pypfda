@@ -231,8 +231,16 @@ def _anom_rmse(a: FloatArray, b: FloatArray) -> float:
     return float(np.sqrt(np.nanmean((a - b) ** 2)))
 
 
-def _drive(model: Lorenz63, obs: Any, *, n_cycles: int, window: float, resample: bool,
-           inflation: float, seed: int) -> tuple[FloatArray, dict, np.ndarray]:
+def _drive(
+    model: Lorenz63,
+    obs: Any,
+    *,
+    n_cycles: int,
+    window: float,
+    resample: bool,
+    inflation: float,
+    seed: int,
+) -> tuple[FloatArray, dict, np.ndarray]:
     pf = ParticleFilter(
         ess_threshold=0.5 if resample else 1e-9,
         resampling="systematic",
@@ -240,9 +248,14 @@ def _drive(model: Lorenz63, obs: Any, *, n_cycles: int, window: float, resample:
         rng=np.random.default_rng(seed),
     )
     driver = CycleDriver(
-        model=model, pf=pf, observations=obs, n_cycles=n_cycles, window=window,
+        model=model,
+        pf=pf,
+        observations=obs,
+        n_cycles=n_cycles,
+        window=window,
         inflation_amplitude=inflation if resample else 0.0,
-        backend=SerialBackend(), base_seed=seed,
+        backend=SerialBackend(),
+        base_seed=seed,
     )
     hist = driver.run()
     targets = np.asarray(hist["targets"], float)  # (n_cycles, n_members) unobserved var
@@ -251,9 +264,19 @@ def _drive(model: Lorenz63, obs: Any, *, n_cycles: int, window: float, resample:
     return targets, hist, final_state
 
 
-def run_classic_l63_osse(*, n_members: int, n_cycles: int, window: float, spinup: int,
-                         obs_sigma: float, eta: float, inflation: float, seed: int,
-                         obs_idx: int = OBS_IDX, target_idx: int = TARGET_IDX) -> dict:
+def run_classic_l63_osse(
+    *,
+    n_members: int,
+    n_cycles: int,
+    window: float,
+    spinup: int,
+    obs_sigma: float,
+    eta: float,
+    inflation: float,
+    seed: int,
+    obs_idx: int = OBS_IDX,
+    target_idx: int = TARGET_IDX,
+) -> dict:
     """Observe one variable, reconstruct another, on the identical pypfda engine."""
     rng = np.random.default_rng(seed)
 
@@ -287,10 +310,24 @@ def run_classic_l63_osse(*, n_members: int, n_cycles: int, window: float, spinup
         free_model.initialize_member(m, ics[m])
         da_model.initialize_member(m, ics[m])
 
-    free_t, _, free_final = _drive(free_model, obs_provider, n_cycles=n_cycles, window=window,
-                                   resample=False, inflation=inflation, seed=seed + 7)
-    da_t, da_h, da_final = _drive(da_model, obs_provider, n_cycles=n_cycles, window=window,
-                                  resample=True, inflation=inflation, seed=seed + 7)
+    free_t, _, free_final = _drive(
+        free_model,
+        obs_provider,
+        n_cycles=n_cycles,
+        window=window,
+        resample=False,
+        inflation=inflation,
+        seed=seed + 7,
+    )
+    da_t, da_h, da_final = _drive(
+        da_model,
+        obs_provider,
+        n_cycles=n_cycles,
+        window=window,
+        resample=True,
+        inflation=inflation,
+        seed=seed + 7,
+    )
 
     free_mean, da_mean = np.nanmean(free_t, 1), np.nanmean(da_t, 1)
     eas = np.asarray(da_h["eas"], float)
@@ -329,8 +366,14 @@ def _scored(r: dict, spin: int = SPIN_EVAL) -> dict:
 
 def main() -> None:
     r = run_classic_l63_osse(
-        n_members=N_MEMBERS, n_cycles=N_CYCLES, window=WINDOW, spinup=SPINUP,
-        obs_sigma=OBS_SIGMA, eta=ETA, inflation=INFLATION, seed=SEED,
+        n_members=N_MEMBERS,
+        n_cycles=N_CYCLES,
+        window=WINDOW,
+        spinup=SPINUP,
+        obs_sigma=OBS_SIGMA,
+        eta=ETA,
+        inflation=INFLATION,
+        seed=SEED,
     )
     s = _scored(r)
     ess = np.asarray(r["ess_da"], float)[SPIN_EVAL:]
@@ -343,8 +386,14 @@ def main() -> None:
     seed_r_da = []
     for sd in SEEDS:
         rr = run_classic_l63_osse(
-            n_members=N_MEMBERS, n_cycles=N_CYCLES, window=WINDOW, spinup=SPINUP,
-            obs_sigma=OBS_SIGMA, eta=ETA, inflation=INFLATION, seed=sd,
+            n_members=N_MEMBERS,
+            n_cycles=N_CYCLES,
+            window=WINDOW,
+            spinup=SPINUP,
+            obs_sigma=OBS_SIGMA,
+            eta=ETA,
+            inflation=INFLATION,
+            seed=sd,
         )
         seed_r_da.append(_scored(rr)["r_da"])
     seed_r_da = np.asarray(seed_r_da)
@@ -356,23 +405,40 @@ def main() -> None:
         "observed_variable": ("x", "y", "z")[OBS_IDX],
         "reconstructed_variable": VAR,
         "params": {
-            "sigma": SIGMA, "rho": RHO, "beta": BETA, "dt": DT,
-            "window": WINDOW, "steps_per_cycle": round(WINDOW / DT),
-            "n_members": N_MEMBERS, "n_cycles": N_CYCLES, "spinup_steps": SPINUP,
-            "obs_sigma": OBS_SIGMA, "eta": ETA, "inflation": INFLATION, "seed": SEED,
-            "spin_eval": SPIN_EVAL, "resampling": "systematic",
-            "ess_threshold": 0.5, "max_weight": 0.3,
+            "sigma": SIGMA,
+            "rho": RHO,
+            "beta": BETA,
+            "dt": DT,
+            "window": WINDOW,
+            "steps_per_cycle": round(WINDOW / DT),
+            "n_members": N_MEMBERS,
+            "n_cycles": N_CYCLES,
+            "spinup_steps": SPINUP,
+            "obs_sigma": OBS_SIGMA,
+            "eta": ETA,
+            "inflation": INFLATION,
+            "seed": SEED,
+            "spin_eval": SPIN_EVAL,
+            "resampling": "systematic",
+            "ess_threshold": 0.5,
+            "max_weight": 0.3,
         },
         "std_truth_target": std_truth,
         "truth_target_min": float(np.min(r["truth_target"])),
         "truth_target_max": float(np.max(r["truth_target"])),
-        "r_free": s["r_free"], "r_da": s["r_da"], "delta_r": dr,
-        "rmse_free": s["rmse_free"], "rmse_da": s["rmse_da"],
+        "r_free": s["r_free"],
+        "r_da": s["r_da"],
+        "delta_r": dr,
+        "rmse_free": s["rmse_free"],
+        "rmse_da": s["rmse_da"],
         "rmse_reduction_frac": 1.0 - s["rmse_da"] / s["rmse_free"],
-        "anom_rmse_free": s["armse_free"], "anom_rmse_da": s["armse_da"],
+        "anom_rmse_free": s["armse_free"],
+        "anom_rmse_da": s["armse_da"],
         "anom_rmse_reduction_frac": armse_red,
-        "ess_median": float(np.median(ess)), "ess_min": float(ess.min()),
-        "eas_median": float(np.median(eas)), "eas_min": float(eas.min()),
+        "ess_median": float(np.median(ess)),
+        "ess_min": float(ess.min()),
+        "eas_median": float(np.median(eas)),
+        "eas_min": float(eas.min()),
         "eas_std": float(np.std(eas)),
         "frac_cycles_eas_le_1p5": float(np.mean(eas <= 1.5)),
         "seeds": list(SEEDS),
@@ -397,12 +463,20 @@ def main() -> None:
     ax.fill_between(x[win], dlo[win], dhi[win], color=DA_C, alpha=0.25, lw=0, zorder=3)
     ax.plot(x[win], r["da_mean"][win], color=DA_C, lw=1.8, zorder=5, label="DA")
     ax.plot(x[win], r["truth_target"][win], color=TRUTH_C, lw=1.2, zorder=6, label="TRUTH")
-    ax.plot(x[win], r["free_mean"][win], color=FREE_C, ls=(0, (5, 2)), lw=1.4, zorder=8, label="FREE")
+    ax.plot(
+        x[win], r["free_mean"][win], color=FREE_C, ls=(0, (5, 2)), lw=1.4, zorder=8, label="FREE"
+    )
     ax.set_xlabel("assimilation cycle")
     ax.set_ylabel(f"unobserved variable  ${VAR}$")
     ax.margins(x=0.005)
-    ax.legend(loc="upper center", ncol=3, frameon=True, framealpha=0.85,
-              facecolor="white", edgecolor="none")
+    ax.legend(
+        loc="upper center",
+        ncol=3,
+        frameon=True,
+        framealpha=0.85,
+        facecolor="white",
+        edgecolor="none",
+    )
     fig.savefig(FIG_TS, dpi=300)
     plt.close(fig)
     print("figure written to", FIG_TS)
@@ -411,14 +485,36 @@ def main() -> None:
     fig, ax = plt.subplots(figsize=(4.2, 4.0), constrained_layout=True)
     txz = r["truth_xz"]
     ax.plot(txz[:, 0], txz[:, 1], color=TRUTH_C, lw=0.6, alpha=0.55, zorder=2, label="TRUTH")
-    ax.scatter(r["free_final_xz"][:, 0], r["free_final_xz"][:, 1], s=10, color=FREE_C,
-               alpha=0.55, lw=0, zorder=3, label="FREE")
-    ax.scatter(r["da_final_xz"][:, 0], r["da_final_xz"][:, 1], s=10, color=DA_C,
-               alpha=0.75, lw=0, zorder=4, label="DA")
+    ax.scatter(
+        r["free_final_xz"][:, 0],
+        r["free_final_xz"][:, 1],
+        s=10,
+        color=FREE_C,
+        alpha=0.55,
+        lw=0,
+        zorder=3,
+        label="FREE",
+    )
+    ax.scatter(
+        r["da_final_xz"][:, 0],
+        r["da_final_xz"][:, 1],
+        s=10,
+        color=DA_C,
+        alpha=0.75,
+        lw=0,
+        zorder=4,
+        label="DA",
+    )
     ax.set_xlabel("$x$")
     ax.set_ylabel("$z$")
-    ax.legend(loc="upper center", ncol=3, frameon=True, framealpha=0.85,
-              facecolor="white", edgecolor="none")
+    ax.legend(
+        loc="upper center",
+        ncol=3,
+        frameon=True,
+        framealpha=0.85,
+        facecolor="white",
+        edgecolor="none",
+    )
     fig.savefig(FIG_ATTR, dpi=300)
     plt.close(fig)
     print("figure written to", FIG_ATTR)
@@ -438,12 +534,23 @@ def main() -> None:
     # Scale to the post-spin-up regime so the cycle-to-cycle EAS variation is
     # legible (cycle 1 starts at N distinct ancestors -- excluded from the range).
     eas_arr = np.asarray(r["eas_da"], float)
-    eas_hi = float(np.nanmax(eas_arr[SPIN_EVAL:])) if eas_arr.size > SPIN_EVAL else float(np.nanmax(eas_arr))
+    eas_hi = (
+        float(np.nanmax(eas_arr[SPIN_EVAL:]))
+        if eas_arr.size > SPIN_EVAL
+        else float(np.nanmax(eas_arr))
+    )
     ax2.set_ylim(0, max(5.0, eas_hi * 1.25))
     ax2.grid(False)
     lines = ax.get_lines()[:1] + ax2.get_lines()[:1]
-    ax.legend(lines, [ln.get_label() for ln in lines], loc="upper right",
-              frameon=True, framealpha=0.85, facecolor="white", edgecolor="none")
+    ax.legend(
+        lines,
+        [ln.get_label() for ln in lines],
+        loc="upper right",
+        frameon=True,
+        framealpha=0.85,
+        facecolor="white",
+        edgecolor="none",
+    )
     fig.savefig(FIG_HEALTH, dpi=300)
     plt.close(fig)
     print("figure written to", FIG_HEALTH)

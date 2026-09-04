@@ -390,7 +390,9 @@ class ClimberXAdapter(ForwardModel):
         sst = read_annual_sst(self._member_dir(member_id) / "ocn.nc")
         if self.cfg.archive_sst:
             w = max(1, round(window))
-            c = self._elapsed.get(member_id, 0) // w - 1   # _elapsed already incremented by forecast()
+            c = (
+                self._elapsed.get(member_id, 0) // w - 1
+            )  # _elapsed already incremented by forecast()
             adir = self._member_dir(member_id) / "sst_archive"
             adir.mkdir(exist_ok=True)
             np.save(adir / f"cycle_{max(c, 0):03d}.npy", sst)
