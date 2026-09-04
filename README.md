@@ -17,17 +17,18 @@ support for paleoclimate Observing System Simulation Experiments (OSSEs).
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
-[![status: work in progress](https://img.shields.io/badge/status-work_in_progress-orange.svg)](#status)
+[![status: active](https://img.shields.io/badge/status-active-brightgreen.svg)](#status)
 
-> **Status — work in progress.**
-> `pypfda` is the open-source companion to a paper currently in
-> preparation ([Fallah et al., 2026](#citing-pypfda)). The core particle filter,
-> weight / ESS / resampling primitives, observation tempering,
-> post-resample inflation, max-weight degeneracy cap and Gaspari–Cohn
-> localization are in place and tested; higher-level diagnostics
-> (genealogy tracking, Welch / Nyquist spectral tools) and the paleo
-> forward-model subpackage are on the roadmap. Public APIs may evolve
-> before `v1.0`. Pin a specific version in production code.
+> **Status — released, actively developed.**
+> `pypfda` is the open-source engine behind a paper in preparation for
+> *Geoscientific Model Development* ([Fallah et al., 2026](#citing-pypfda)).
+> The core particle filter, weight / ESS / resampling primitives,
+> observation tempering, post-resample inflation, max-weight degeneracy
+> cap, Gaspari–Cohn localization, genealogy tracking and the marine
+> pseudo-proxy network builder are in place and tested; calibrated proxy
+> forward models and the Welch / Nyquist spectral tools are on the
+> roadmap. The project follows semantic versioning; pin a specific
+> version in production code.
 
 `pypfda` provides a clean, model-agnostic implementation of the sequential
 importance resampling (SIR) particle filter, plus the building blocks needed
@@ -45,11 +46,13 @@ runs the analysis cycle.
 `pypfda` is a *model-agnostic engine*. A dynamical core plugs in through one
 small interface — `forecast` · `observe` · `get/set_state` · `inflate` — and the
 same sequential-importance-resampling cycle (cost → weights → ESS check →
-systematic resample → inflate) drives it. The companion OSSE study runs this
-**identical** filter on two structurally independent ocean cores — CM2Mc-BLING
-(MOM5 *z*-level GCM) and CLIMBER-X (GOLDSTEIN frictional-geostrophic EMIC) — and
-recovers AMOC variability from sea-surface-temperature pseudo-observations in
-both, with the same diversity–memory trade-off emerging in each.
+systematic resample → inflate) drives it. The companion OSSE study drives this
+**same** cycle on a coupled ocean core — CM2Mc-BLING (MOM5 pressure-coordinate
+GCM) — through a cluster-side implementation of the interface, and recovers AMOC
+variability from sea-surface-temperature pseudo-observations. The package itself
+runs the idealized fast–slow Lorenz cores in process; it also ships subprocess
+adapters for CLIMBER-X (GOLDSTEIN frictional-geostrophic EMIC) and PlaSim-LSG
+that the study does not evaluate.
 
 ![pypfda architecture: pluggable ocean cores attach through one common interface that feeds the SIR engine; each core runs the same TRUTH / FREE / DA observing-system simulation experiment](docs/_static/pypfda_architecture.png)
 
@@ -82,7 +85,7 @@ seconds to a few minutes and writes a single figure to
 not AMOC — but they show that the filter's qualitative behaviour is
 not an artefact of the coupled model.
 
-### 1. Diversity–memory trade-off (§5, headline claim)
+### 1. Diversity–memory trade-off
 
 ![Diversity-memory trade-off on Lorenz-96](docs/_static/l96_diversity_memory.png)
 
@@ -170,7 +173,8 @@ with `python examples/08_two_scale_l96_fast_slow.py`.
 
 The package ships two coupled fast–slow systems as first-class
 `ForwardModel`s in `pypfda.models.lorenz`, each driven by the *same*
-`CycleDriver` that the companion paper points at its coupled GCM cores:
+`CycleDriver` whose cycle the companion paper's cluster-side driver reproduces
+for its coupled GCM core:
 
 - **`TwoScaleLorenz96`** — the two-level Lorenz-96 model (Lorenz 1996;
   Lorenz & Emanuel 1998): slow large-scale variables `X_k` coupled to a
@@ -249,11 +253,12 @@ Lorenz-96.
   restart file, launch a SLURM job array, or cycle ensemble state
   between `INPUT/` and `RESTART/` directories.
 - The HPC orchestration used by the companion paper — that is a
-  separate, cluster-specific driver that calls `pypfda` functions but
-  lives elsewhere.
-- A coral δ¹⁸O proxy forward model, a PAGES 2k loader, or any
-  paleo-specific I/O. These are planned for `pypfda.paleo` but are
-  not yet implemented.
+  separate, cluster-specific driver that implements the same interface
+  and the same weight, tempering and resampling rules without importing
+  `pypfda`, and lives elsewhere.
+- A coral δ¹⁸O proxy forward model or a PAGES 2k loader. `pypfda.paleo`
+  ships the marine pseudo-proxy network builder only; calibrated proxy
+  system models are planned.
 - The 100-member ensemble output underlying the paper's figures (that
   sits on the authors' cluster; see [Paper data](#paper-data) below).
 
@@ -345,24 +350,26 @@ Read the docs at <https://bijanf.github.io/pypfda>.
 If you use `pypfda` in published work, please cite the software (via the
 `CITATION.cff` button on GitHub) **and** the methodological paper:
 
-> Fallah, B., Rostami, M., Huiskamp, W., Goosse, H., & Rahmstorf, S.
-> (2026). Online Particle Filter Data Assimilation for AMOC
-> Reconstruction: A Diversity–Memory Trade-off in Observing System
-> Simulation Experiments. In preparation.
+> Fallah, B., Huiskamp, W., & Goosse, H. (2026). pypfda v1.0: An
+> open-source, model-agnostic particle-filter engine for online
+> sequential paleo data assimilation in Earth system models. In
+> preparation for *Geoscientific Model Development*.
 
 A BibTeX snippet is provided in [CITATION.cff](CITATION.cff).
 
 ## Paper data
 
 The companion paper is an Observing System Simulation Experiment built
-on the coupled CM2Mc-BLING climate model with 100-member ensembles
-integrated for ~100 years each (several months of cluster wall time per
-experiment, of order one terabyte of netCDF output). That raw ensemble
-is **not** distributed with this repository and would be impractical
-to re-generate from scratch. It currently resides on the Potsdam
-Institute for Climate Impact Research (PIK) cluster; interested
-researchers are welcome to contact the authors for access or for
-processed diagnostics.
+on the coupled CM2Mc-BLING climate model, with 100-member ensembles
+integrated for 100 years each and one 300-year integration (several
+months of cluster wall time per experiment, about 16 TB of netCDF
+output). That raw ensemble is **not** distributed with this repository
+and would be impractical to re-generate from scratch; it resides on the
+Potsdam Institute for Climate Impact Research (PIK) cluster. The
+diagnostics behind the paper's figures, the analysis scripts and the run
+configurations are deposited on Zenodo under CC-BY
+([10.5281/zenodo.22287824](https://doi.org/10.5281/zenodo.22287824));
+for the raw output, contact the authors.
 
 What *is* in this repository is the **method**: a model-agnostic
 implementation of the techniques the paper applies (SIR, observation
